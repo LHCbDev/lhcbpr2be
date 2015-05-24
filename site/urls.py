@@ -11,6 +11,7 @@ default_router = DefaultRouter()
 router.register(r'applications', views.ApplicationViewSet)
 router.register(r'versions', views.ApplicationVersionViewSet)
 router_options = router.register(r'options', views.OptionViewSet)
+router.register(r'groups', views.AttributeGroupViewSet)
 router.register(r'attributes', views.AttributeViewSet)
 router.register(r'setups', views.SetupProjectViewSet)
 router_jd = router.register(r'descriptions', views.JobDescriptionViewSet)
@@ -33,6 +34,10 @@ router_jobs.register(r'job_descriptions',
                      views.JobDescriptionViewSet,
                      base_name='jobs-description',
                      parents_query_lookups=['jobs'])
+router_jobs.register(r'results',
+                     views.JobResultNoJobViewSet,
+                     base_name='jobs-results',
+                     parents_query_lookups=['job'])
 
 router_jd.register(r'jobs', views.JobViewSet, base_name='jobdescription-job',
                    parents_query_lookups=['job_description'])
@@ -50,6 +55,11 @@ router.register(
 router.register(
     r"search-jobs", views.SearchJobsViewSet,
     base_name="search-jobs"
+)
+
+router.register(
+    r"compare", views.CompareJobsViewSet,
+    base_name="compare-jobs"
 )
 
 # router.register(

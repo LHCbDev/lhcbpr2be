@@ -58,3 +58,6 @@ target/
 *.sqlite3
 static/
 migrations/
+
+# Private
+private.py

@@ -1,20 +1,25 @@
 import sys
 from lhcbpr_api.models import (Application, ApplicationVersion,
                                Option, Attribute, SetupProject,
-                               JobDescription,
+                               JobDescription, AttributeGroup,
                                AttributeThreshold, Handler, JobHandler,
                                HandlerResult, AddedResult, Job,
-                               JobResult, ResultFile, Platform, Host)
+                               JobResult, Platform, Host)
 
 from rest_framework import viewsets
+from rest_framework import generics
+from rest_framework import mixins
 
 from rest_framework.response import Response
 from serializers import *
 from rest_framework_extensions.mixins import NestedViewSetMixin
+
 from django.shortcuts import get_object_or_404
 from django.db.models import Count
 from rest_framework.decorators import detail_route, list_route
 
+import logging
+logger = logging.getLogger(__name__)
 
 class ApplicationViewSet(viewsets.ModelViewSet):
     queryset = Application.objects.all()
@@ -30,6 +35,14 @@ class OptionViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = Option.objects.all()
     serializer_class = OptionSerializer
 
+class AttributeGroupViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
+    queryset = AttributeGroup.objects.all()
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return AttributeGroupListSerializer
+        else:
+            return AttributeGroupRetrieveSerializer
 
 class AttributeViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = Attribute.objects.all()
@@ -66,9 +79,13 @@ class HandlerResultViewSet(viewsets.ModelViewSet):
     serializer_class = HandlerResultSerializer
 
 
-class JobResultViewSet(viewsets.ModelViewSet):
+class JobResultViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = JobResult.objects.all()
     serializer_class = JobResultSerializer
+
+class JobResultNoJobViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
+    queryset = JobResult.objects.all()
+    serializer_class = JobResultNoJobSerializer
 
 
 class JobResultByOptionAndAttribute(viewsets.ViewSet):
@@ -80,11 +97,6 @@ class JobResultByOptionAndAttribute(viewsets.ViewSet):
         serializer = JobResultSerializer(
             queryset, context={'request': request}, many=True)
         return Response(serializer.data)
-
-
-class ResultFileViewSet(viewsets.ModelViewSet):
-    queryset = ResultFile.objects.all()
-    serializer_class = ResultFileSerializer
 
 
 class JobViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
@@ -122,8 +134,7 @@ class ActiveApplicationViewSet(viewsets.ViewSet):
                  "count": app["njobs"]
                  }
             )
-        serializer = ActiveItemSerializer(result, many=True, read_only=True)
-        return Response(serializer.data)
+        return Response(result)
 
     def retrieve(self, request, pk=None):
         queryset = Application.objects.all()
@@ -135,11 +146,83 @@ class ActiveApplicationViewSet(viewsets.ViewSet):
     def versions(self, request, pk):
         id_field = 'job_description__application_version__id'
         name_field = 'job_description__application_version__version'
+        time_field = 'job_description__application_version__vtime'
+        slot_id_field = 'job_description__application_version__slot__id'
+        slot_field = 'job_description__application_version__slot__name'
+        
+        result = []
+        # Releases
+        queryset = (
+            Job.objects
+            .select_related()
+            .values(id_field, name_field, time_field)
+            .filter(
+                job_description__application_version__slot__isnull=True,
+                job_description__application_version__application__id=pk)
+            .annotate(njobs=Count(id_field))
+            .order_by('-'+time_field)
+        )
+        releases = []
+        for app in queryset:
+            releases.append(
+                {"id": app[id_field],
+                 "name": app[name_field],
+                 "count": app["njobs"]
+                }
+            )
+        result.append({'name': 'Releases', 'values': releases})
+        
+        # Slots
+        queryset = (
+            Job.objects
+            .select_related()
+            .values(slot_id_field, slot_field)
+            .filter(
+                job_description__application_version__slot__isnull=False,
+                job_description__application_version__application__id=pk)
+            .annotate(njobs=Count(slot_id_field))
+            .order_by(slot_field)
+        )
+
+        slots = []
+        for slot in queryset:
+            slot_record = {'name': slot[slot_field]}
+            queryset_per_slot = (
+                Job.objects
+                .select_related()
+                .values(id_field, name_field, time_field)
+                .filter(
+                    job_description__application_version__slot__id=slot[slot_id_field],
+                    job_description__application_version__application__id=pk
+                )
+                .annotate(njobs=Count(id_field))
+                .order_by('-' + time_field)[:7]
+            )
+            slot_values = []
+            for app in queryset_per_slot:
+                slot_values.append(
+                    {   
+                        "id": app[id_field],
+                        "name": app[name_field],
+                        "count": app["njobs"]
+                    }
+                )
+            slot_record["values"] = slot_values
+            slot_record["count"] = slot["njobs"]
+            if slot_values:
+                result.append(slot_record)   
+        
+        return Response(result)
+
+    @list_route()
+    def slots(self, request, pk):
+        id_field = 'job_description__application_version__slot__id'
+        name_field = 'job_description__application_version__slot__name'
         queryset = (
             Job.objects
             .select_related()
             .values(id_field, name_field)
-            .filter(job_description__application_version__application__id=pk)
+            .filter(job_description__application_version__slot__id__isnull=False, job_description__application_version__application__id=pk)
             .annotate(njobs=Count(id_field))
         )
         result = []
@@ -150,8 +233,7 @@ class ActiveApplicationViewSet(viewsets.ViewSet):
                  "count": app["njobs"]
                  }
             )
-        serializer = ActiveItemSerializer(result, many=True, read_only=True)
-        return Response(serializer.data)
+        return Response(result)
 
     @list_route()
     def options(self, request, pk):
@@ -182,13 +264,13 @@ class ActiveApplicationViewSet(viewsets.ViewSet):
                  }
             )
 
-        serializer = ActiveItemSerializer(result, many=True, read_only=True)
-        return Response(serializer.data)
+        return Response(result)
 
 
-class SearchJobsViewSet(viewsets.ViewSet):
+class SearchJobsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
+    serializer_class = JobSerializer
 
-    def list(self, request):
+    def get_queryset(self):
         id_field = 'job_description__application_version__application__id'
         name_field = 'job_description__application_version__application__name'
         queryset = (
@@ -196,25 +278,28 @@ class SearchJobsViewSet(viewsets.ViewSet):
             .select_related()
             .order_by("-id")
         )
-        application = request.query_params.get("application", None)
+        application = self.request.query_params.get("application", None)
         if application:
             ids = application.split(',')
             queryset = queryset.filter(
                 job_description__application_version__application__id__in=ids)
 
-        versions = request.query_params.get("versions", None)
+        versions = self.request.query_params.get("versions", None)
         if versions:
             ids = versions.split(',')
             queryset = queryset.filter(
                 job_description__application_version__id__in=ids)
 
-        options = request.query_params.get("options", None)
+        options = self.request.query_params.get("options", None)
         if options:
             ids = options.split(',')
             queryset = queryset.filter(job_description__option__id__in=ids)
-        print >>sys.stderr, queryset.query
-        serializer = JobSerializer(queryset, many=True, read_only=True, context={'request': request})
-        return Response(serializer.data)
+        
+        return queryset.order_by('-time_end')
+        # serializer = JobListSerializer(queryset, many=True, read_only=True, context={'request': request})
+        # return Response(serializer.data)
+
+
 
     def retrieve(self, request, pk=None):
         queryset = Job.objects.all()
@@ -273,3 +358,28 @@ class SearchJobsViewSet(viewsets.ViewSet):
 
         serializer = ActiveItemSerializer(result, many=True, read_only=True)
         return Response(serializer.data)
+
+class CompareJobsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
+    serializer_class = AttributesWithJobResultsSerializer
+    
+    def get_queryset(self):
+        context = self.get_serializer_context()
+        results = Attribute.objects
+        if context["attrs"]:
+            results = results.filter(id__in=context["attrs"])
+        if context["contains"]:
+            results = results.filter(name__icontains=context["contains"])
+        results = results.filter(jobresults__job__id__in=context["ids"])
+        return results.order_by('name').distinct()
+
+    def get_serializer_context(self):
+        result = {"ids": [], "attrs": [], "request": self.request, "contains": None}
+        if 'ids' in self.request.query_params:
+            result["ids"] = [int(id) for id in self.request.query_params['ids'].split(',')]
+        if 'attrs' in self.request.query_params:
+            result["attrs"] = [int(id) for id in self.request.query_params['attrs'].split(',')]        
+        
+        if 'contains' in self.request.query_params:
+            result['contains'] = self.request.query_params['contains']
+
+        return result
