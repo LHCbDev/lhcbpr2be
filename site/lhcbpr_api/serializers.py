@@ -240,3 +240,13 @@ class ActiveItemSerializer(serializers.Serializer):
     id=serializers.IntegerField()
     name=serializers.CharField(max_length=200)
     count=serializers.IntegerField()
+
+class TrendValueSerializer(serializers.Serializer):
+    version = serializers.CharField(max_length = 200)
+    average = serializers.FloatField()
+    deviation = serializers.FloatField()
+
+class TrendsSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField(max_length = 200)
+    values = serializers.ListField(serializers.DictField(child = TrendValueSerializer()))

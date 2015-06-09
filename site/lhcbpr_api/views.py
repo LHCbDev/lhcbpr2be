@@ -383,3 +383,92 @@ class CompareJobsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
             result['contains'] = self.request.query_params['contains']
 
         return result
+
+class TrendsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
+    serializer_class = TrendsSerializer
+    
+    def get_queryset(self):
+        context = self.get_serializer_context()
+        queryset = JobResult.objects
+        if context['app']:
+            queryset = queryset.filter(job__job_description__application_version__application__id__in = context['app'])
+        if context['options']:
+            queryset = queryset.filter(job_description__option__id__in = context['options'])
+        queryset = queryset.select_related(
+            'attr__name', 
+            'job__job_description__application_version__version'
+        )
+        queryset = queryset.filter(attr__dtype__in = ['Float', 'Integer'])
+        queryset = queryset.order_by('attr__id')
+        queryset = queryset.values(
+            'attr__id', 
+            'attr__name',
+            'job__job_description__application_version__version',
+            'resultinteger',
+            'resultfloat'
+        )
+
+        results = []
+        current_attr_id = None
+        current_result_index = -1
+        current_version = None
+        current_version_index = -1
+        for item in queryset:
+            if current_version_index > -1 and (item['attr__id'] != current_attr_id or item['job__job_description__application_version__version'] != current_version):
+                numbers = results[current_result_index]['values'][current_version_index]['results']
+                count = float(len(numbers))
+                average = sum(numbers) / count
+                deviation = 0
+                for n in numbers:
+                    deviation = deviation + abs(average - n)
+                deviation = deviation / count
+                results[current_result_index]['values'][current_version_index] = {
+                    'version': current_version,
+                    'average': average,
+                    'deviation': deviation
+                }
+            if item['attr__id'] != current_attr_id:
+                results.append({
+                    'id': item['attr__id'],
+                    'name': item['attr__name'],
+                    'values': []
+                })
+                current_result_index = current_result_index + 1
+                current_attr_id = item['attr__id']
+                current_version = None
+                current_version_index = -1
+            if item['job__job_description__application_version__version'] != current_version:
+                current_version = item['job__job_description__application_version__version']
+                results[current_result_index]['values'].append({
+                    'version': current_version,
+                    'results': []
+                })
+                current_version_index = current_version_index + 1
+            if item['resultfloat']:
+                results[current_result_index]['values'][current_version_index]['results'].append(item['resultfloat'])
+            else:
+                results[current_result_index]['values'][current_version_index]['results'].append(item['resultinteger'])
+
+        if current_version_index > -1:
+            numbers = results[current_result_index]['values'][current_version_index]['results']
+            count = float(len(numbers))
+            average = sum(numbers) / count
+            deviation = 0
+            for n in numbers:
+                deviation = deviation + abs(average - n)
+            deviation = deviation / count
+            results[current_result_index]['values'][current_version_index] = {
+                'version': current_version,
+                'average': average,
+                'deviation': deviation
+            }
+
+        return results
+
+    def get_serializer_context(self):
+        result = {"app": None, "options": None, "request": self.request}
+        if 'app' in self.request.query_params:
+            result["app"] = [int(id) for id in self.request.query_params['app'].split(',')]
+        if 'options' in self.request.query_params:
+            result["options"] = [int(id) for id in self.request.query_params['options'].split(',')]
+        return result
