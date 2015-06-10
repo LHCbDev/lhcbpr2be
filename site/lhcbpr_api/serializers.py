@@ -243,8 +243,8 @@ class ActiveItemSerializer(serializers.Serializer):
 
 class TrendValueSerializer(serializers.Serializer):
     version = serializers.CharField(max_length = 200)
-    average = serializers.FloatField()
-    deviation = serializers.FloatField()
+    average = serializers.DecimalField(max_digits = 12, decimal_places = 2)
+    deviation = serializers.DecimalField(max_digits = 12, decimal_places = 2)
 
 class TrendsSerializer(serializers.Serializer):
     id = serializers.IntegerField()

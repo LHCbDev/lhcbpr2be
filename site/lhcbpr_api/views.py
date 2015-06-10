@@ -18,6 +18,8 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Count
 from rest_framework.decorators import detail_route, list_route
 
+from operator import itemgetter
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -393,11 +395,12 @@ class TrendsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
         if context['app']:
             queryset = queryset.filter(job__job_description__application_version__application__id__in = context['app'])
         if context['options']:
-            queryset = queryset.filter(job_description__option__id__in = context['options'])
+            queryset = queryset.filter(job__job_description__option__id__in = context['options'])
         queryset = queryset.select_related(
             'attr__name', 
             'job__job_description__application_version__version'
         )
+        # Retreive only results with numeric values
         queryset = queryset.filter(attr__dtype__in = ['Float', 'Integer'])
         queryset = queryset.order_by('attr__id')
         queryset = queryset.values(
@@ -414,6 +417,7 @@ class TrendsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
         current_version = None
         current_version_index = -1
         for item in queryset:
+            # if all results of the version was added, compute the average and deviation
             if current_version_index > -1 and (item['attr__id'] != current_attr_id or item['job__job_description__application_version__version'] != current_version):
                 numbers = results[current_result_index]['values'][current_version_index]['results']
                 count = float(len(numbers))
@@ -427,6 +431,7 @@ class TrendsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
                     'average': average,
                     'deviation': deviation
                 }
+            # If new attribute, add it
             if item['attr__id'] != current_attr_id:
                 results.append({
                     'id': item['attr__id'],
@@ -437,6 +442,7 @@ class TrendsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
                 current_attr_id = item['attr__id']
                 current_version = None
                 current_version_index = -1
+            # If new version, add it
             if item['job__job_description__application_version__version'] != current_version:
                 current_version = item['job__job_description__application_version__version']
                 results[current_result_index]['values'].append({
@@ -444,11 +450,12 @@ class TrendsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
                     'results': []
                 })
                 current_version_index = current_version_index + 1
+            # Add the result to the current version
             if item['resultfloat']:
-                results[current_result_index]['values'][current_version_index]['results'].append(item['resultfloat'])
+                results[current_result_index]['values'][current_version_index]['results'].append(item['resultfloat'] / 1000)
             else:
-                results[current_result_index]['values'][current_version_index]['results'].append(item['resultinteger'])
-
+                results[current_result_index]['values'][current_version_index]['results'].append(item['resultinteger'] / 1000)
+        # Compute average and deviation for the last version
         if current_version_index > -1:
             numbers = results[current_result_index]['values'][current_version_index]['results']
             count = float(len(numbers))
@@ -462,6 +469,9 @@ class TrendsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
                 'average': average,
                 'deviation': deviation
             }
+        # Sort values on each attribute by version
+        for index in range(0, len(results)):
+            results[index]['values'] = sorted(results[index]['values'], key = itemgetter('version'))
 
         return results
 
