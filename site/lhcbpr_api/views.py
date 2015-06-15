@@ -444,16 +444,20 @@ class HistogramsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
                     results[result_index]['values'][version_index]['results'] = numbers
             # Compute min, max values and the interval width for each attribute
             for result_index in range(0, len(results)):
-                min_value = results[result_index]['values'][0]['results'][0]
-                max_value = min_value
+                min_value = 9999999
+                max_value = 0
+                # if len(results[result_index]['values'][0]['results']) > 0:
+                #     min_value = results[result_index]['values'][0]['results'][0]
+                #     max_value = min_value
                 for version_index in range(0, len(results[result_index]['values'])):
                     numbers = results[result_index]['values'][version_index]['results']
-                    temp = min(numbers)
-                    if temp < min_value:
-                        min_value = temp
-                    temp = max(numbers)
-                    if temp > max_value:
-                        max_value = temp
+                    if len(numbers) > 0:
+                        temp = min(numbers)
+                        if temp < min_value:
+                            min_value = temp
+                        temp = max(numbers)
+                        if temp > max_value:
+                            max_value = temp
                 results[result_index]['min_value'] = min_value
                 results[result_index]['max_value'] = max_value
                 results[result_index]['interval_width'] = (max_value - min_value) / float(context_intervals - 1)
