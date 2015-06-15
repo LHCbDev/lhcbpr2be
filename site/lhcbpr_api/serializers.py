@@ -250,3 +250,15 @@ class TrendsSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     name = serializers.CharField(max_length = 200)
     values = serializers.ListField(serializers.DictField(child = TrendValueSerializer()))
+
+class HistogramValueSerializer(serializers.Serializer):
+    version = serializers.CharField(max_length = 200)
+    jobs = serializers.ListField(serializers.IntegerField())
+
+class HistogramsSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField(max_length = 200)
+    min_value = serializers.FloatField()
+    max_value = serializers.FloatField()
+    interval_width = serializers.FloatField()
+    values = serializers.ListField(serializers.DictField(child = HistogramValueSerializer()))

@@ -19,6 +19,7 @@ from django.db.models import Count
 from rest_framework.decorators import detail_route, list_route
 
 from operator import itemgetter
+from lhcbpr_api.services import *
 
 import logging
 logger = logging.getLogger(__name__)
@@ -391,87 +392,24 @@ class TrendsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     
     def get_queryset(self):
         context = self.get_serializer_context()
-        queryset = JobResult.objects
-        if context['app']:
-            queryset = queryset.filter(job__job_description__application_version__application__id__in = context['app'])
-        if context['options']:
-            queryset = queryset.filter(job__job_description__option__id__in = context['options'])
-        queryset = queryset.select_related(
-            'attr__name', 
-            'job__job_description__application_version__version'
-        )
-        # Retreive only results with numeric values
-        queryset = queryset.filter(attr__dtype__in = ['Float', 'Integer'])
-        queryset = queryset.order_by('attr__id')
-        queryset = queryset.values(
-            'attr__id', 
-            'attr__name',
-            'job__job_description__application_version__version',
-            'resultinteger',
-            'resultfloat'
-        )
-
-        results = []
-        current_attr_id = None
-        current_result_index = -1
-        current_version = None
-        current_version_index = -1
-        for item in queryset:
-            # if all results of the version was added, compute the average and deviation
-            if current_version_index > -1 and (item['attr__id'] != current_attr_id or item['job__job_description__application_version__version'] != current_version):
-                numbers = results[current_result_index]['values'][current_version_index]['results']
+        results = JobResultsService().get_results_per_attr_per_version(context)
+        
+        for result_index in range(0, len(results)):
+            for version_index in range(0, len(results[result_index]['values'])):
+                current_version = results[result_index]['values'][version_index]['version']
+                numbers = results[result_index]['values'][version_index]['results']
                 count = float(len(numbers))
                 average = sum(numbers) / count
                 deviation = 0
                 for n in numbers:
                     deviation = deviation + abs(average - n)
                 deviation = deviation / count
-                results[current_result_index]['values'][current_version_index] = {
+                results[result_index]['values'][version_index] = {
                     'version': current_version,
                     'average': average,
                     'deviation': deviation
                 }
-            # If new attribute, add it
-            if item['attr__id'] != current_attr_id:
-                results.append({
-                    'id': item['attr__id'],
-                    'name': item['attr__name'],
-                    'values': []
-                })
-                current_result_index = current_result_index + 1
-                current_attr_id = item['attr__id']
-                current_version = None
-                current_version_index = -1
-            # If new version, add it
-            if item['job__job_description__application_version__version'] != current_version:
-                current_version = item['job__job_description__application_version__version']
-                results[current_result_index]['values'].append({
-                    'version': current_version,
-                    'results': []
-                })
-                current_version_index = current_version_index + 1
-            # Add the result to the current version
-            if item['resultfloat']:
-                results[current_result_index]['values'][current_version_index]['results'].append(item['resultfloat'] / 1000)
-            else:
-                results[current_result_index]['values'][current_version_index]['results'].append(item['resultinteger'] / 1000)
-        # Compute average and deviation for the last version
-        if current_version_index > -1:
-            numbers = results[current_result_index]['values'][current_version_index]['results']
-            count = float(len(numbers))
-            average = sum(numbers) / count
-            deviation = 0
-            for n in numbers:
-                deviation = deviation + abs(average - n)
-            deviation = deviation / count
-            results[current_result_index]['values'][current_version_index] = {
-                'version': current_version,
-                'average': average,
-                'deviation': deviation
-            }
-        # Sort values on each attribute by version
-        for index in range(0, len(results)):
-            results[index]['values'] = sorted(results[index]['values'], key = itemgetter('version'))
+            results[result_index]['values'] = sorted(results[result_index]['values'], key = itemgetter('version'))
 
         return results
 
@@ -481,4 +419,80 @@ class TrendsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
             result["app"] = [int(id) for id in self.request.query_params['app'].split(',')]
         if 'options' in self.request.query_params:
             result["options"] = [int(id) for id in self.request.query_params['options'].split(',')]
+        return result
+
+class HistogramsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
+    serializer_class = HistogramsSerializer
+    
+    def get_queryset(self):
+        context = self.get_serializer_context()
+        results = JobResultsService().get_results_per_attr_per_version(context)
+        if len(results) > 0:
+            context_min = context['min']
+            context_max = context['max']
+            context_intervals = context['intervals']
+            if not context_intervals:
+                context_intervals = 25
+            # Remove values less than context_min or greater than context_max
+            for result_index in range(0, len(results)):
+                for version_index in range(0, len(results[result_index]['values'])):
+                    numbers = results[result_index]['values'][version_index]['results']
+                    if context_min:
+                        numbers = [ i for i in numbers if i >= context_min ]
+                    if context_max:
+                        numbers = [ i for i in numbers if i <= context_max ]
+                    results[result_index]['values'][version_index]['results'] = numbers
+            # Compute min, max values and the interval width for each attribute
+            for result_index in range(0, len(results)):
+                min_value = results[result_index]['values'][0]['results'][0]
+                max_value = min_value
+                for version_index in range(0, len(results[result_index]['values'])):
+                    numbers = results[result_index]['values'][version_index]['results']
+                    temp = min(numbers)
+                    if temp < min_value:
+                        min_value = temp
+                    temp = max(numbers)
+                    if temp > max_value:
+                        max_value = temp
+                results[result_index]['min_value'] = min_value
+                results[result_index]['max_value'] = max_value
+                results[result_index]['interval_width'] = (max_value - min_value) / float(context_intervals - 1)
+            # Compute jobs number per interval
+            for result_index in range(0, len(results)):
+                interval_width = results[result_index]['interval_width']
+                min_value = results[result_index]['min_value']
+                for version_index in range(0, len(results[result_index]['values'])):
+                    current_version = results[result_index]['values'][version_index]['version']
+                    numbers = results[result_index]['values'][version_index]['results']
+                    jobs = [ 0 for i in range(0, int(context_intervals)) ]
+                    for n in numbers:
+                        jobs[int((n - min_value) / interval_width)] += 1
+                    results[result_index]['values'][version_index] = {
+                        'version': current_version,
+                        'jobs': jobs
+                    }
+        return results
+
+    def get_serializer_context(self):
+        result = {
+            'request': self.request,
+            'app': None,
+            'options': None, 
+            'versions': None,
+            'min': None,
+            'max': None,
+            'intervals': None
+        }
+        if 'app' in self.request.query_params:
+            result['app'] = [int(id) for id in self.request.query_params['app'].split(',')]
+        if 'options' in self.request.query_params:
+            result['options'] = [int(id) for id in self.request.query_params['options'].split(',')]
+        if 'versions' in self.request.query_params:
+            result['versions'] = [int(id) for id in self.request.query_params['versions'].split(',')]
+        if 'min' in self.request.query_params:
+            result['min'] = float(self.request.query_params['min'])
+        if 'max' in self.request.query_params:
+            result['max'] = float(self.request.query_params['max'])
+        if 'intervals' in self.request.query_params:
+            result['intervals'] = float(self.request.query_params['intervals'])
         return result
