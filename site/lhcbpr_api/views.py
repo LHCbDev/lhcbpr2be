@@ -460,21 +460,33 @@ class HistogramsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
                             max_value = temp
                 results[result_index]['min_value'] = min_value
                 results[result_index]['max_value'] = max_value
-                results[result_index]['interval_width'] = (max_value - min_value) / float(context_intervals - 1)
+                results[result_index]['interval_width'] = (max_value - min_value) / float(context_intervals)
             # Compute jobs number per interval
             for result_index in range(0, len(results)):
                 interval_width = results[result_index]['interval_width']
                 min_value = results[result_index]['min_value']
-                for version_index in range(0, len(results[result_index]['values'])):
-                    current_version = results[result_index]['values'][version_index]['version']
-                    numbers = results[result_index]['values'][version_index]['results']
-                    jobs = [ 0 for i in range(0, int(context_intervals)) ]
-                    for n in numbers:
-                        jobs[int((n - min_value) / interval_width)] += 1
-                    results[result_index]['values'][version_index] = {
-                        'version': current_version,
-                        'jobs': jobs
-                    }
+                if interval_width > 0:
+                    for version_index in range(0, len(results[result_index]['values'])):
+                        current_version = results[result_index]['values'][version_index]['version']
+                        numbers = results[result_index]['values'][version_index]['results']
+                        jobs = [ 0 for i in range(0, int(context_intervals + 1)) ]
+                        for n in numbers:
+                            job_index = n - min_value
+                            job_index = job_index / interval_width
+                            job_index = int(job_index)  
+                            jobs[job_index] += 1
+                        results[result_index]['values'][version_index] = {
+                            'version': current_version,
+                            'jobs': jobs
+                        }
+                else:
+                    for version_index in range(0, len(results[result_index]['values'])):
+                        current_version = results[result_index]['values'][version_index]['version']
+                        jobs = [ 0 for i in range(0, int(context_intervals + 1)) ]
+                        results[result_index]['values'][version_index] = {
+                            'version': current_version,
+                            'jobs': jobs
+                        }
         return results
 
     def get_serializer_context(self):
