@@ -419,6 +419,8 @@ class TrendsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
             result["app"] = [int(id) for id in self.request.query_params['app'].split(',')]
         if 'options' in self.request.query_params:
             result["options"] = [int(id) for id in self.request.query_params['options'].split(',')]
+        if 'attr_filter' in self.request.query_params:
+            result['attr_filter'] = self.request.query_params['attr_filter']
         return result
 
 class HistogramsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
@@ -497,7 +499,8 @@ class HistogramsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
             'versions': None,
             'min': None,
             'max': None,
-            'intervals': None
+            'intervals': None,
+            'attr_filter': None
         }
         if 'app' in self.request.query_params:
             result['app'] = [int(id) for id in self.request.query_params['app'].split(',')]
@@ -511,4 +514,6 @@ class HistogramsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
             result['max'] = float(self.request.query_params['max'])
         if 'intervals' in self.request.query_params:
             result['intervals'] = float(self.request.query_params['intervals'])
+        if 'attr_filter' in self.request.query_params:
+            result['attr_filter'] = self.request.query_params['attr_filter']
         return result

@@ -16,6 +16,8 @@ class JobResultsService:
             queryset = queryset.filter(job__job_description__option__id__in = context['options'])
         if 'versions' in context and context['versions']:
             queryset = queryset.filter(job__job_description__application_version__id__in = context['versions'])
+        if 'attr_filter' in context and context['attr_filter']:
+            queryset = queryset.filter(attr__name__contains = context['attr_filter'])
         if only_numeric:
             queryset = queryset.filter(attr__dtype__in = ['Float', 'Integer'])
             
