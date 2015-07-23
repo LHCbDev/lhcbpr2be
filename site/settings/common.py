@@ -14,6 +14,7 @@ import os
 BASE_DIR = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
 DB_DIR = os.path.join(BASE_DIR, 'data')
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+DATA_ROOT = os.path.join(BASE_DIR, 'data')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
@@ -41,7 +42,7 @@ INSTALLED_APPS = (
     'django_extensions',
     'rest_framework',
     'lhcbpr_api',
-    'lhcbpr' # v1
+    'lhcbpr'  # v1
 )
 
 MIDDLEWARE_CLASSES = (
@@ -93,8 +94,10 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.BrowsableAPIRenderer',
     ),
     'PAGINATE_BY': 10,                 # Default to 10
-    'PAGINATE_BY_PARAM': 'page_size',  # Allow client to override, using `?page_size=xxx`.
-    'MAX_PAGINATE_BY': 100             # Maximum limit allowed when using `?page_size=xx
+    # Allow client to override, using `?page_size=xxx`.
+    'PAGINATE_BY_PARAM': 'page_size',
+    # Maximum limit allowed when using `?page_size=xx
+    'MAX_PAGINATE_BY': 100
 }
 
 LOGGING = {
@@ -125,3 +128,7 @@ LOGGING = {
         },
     },
 }
+
+
+ZIP_DIR = DB_DIR
+JOBS_UPLOAD_DIR = os.path.join(DATA_ROOT, 'jobs')

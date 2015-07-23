@@ -2,7 +2,6 @@ from django.db import models
 import dateutil.parser
 from django.utils import timezone
 
-
 import logging
 logger = logging.getLogger(__name__)
 
@@ -21,6 +20,7 @@ class Host(models.Model):
     memory_info = models.CharField(max_length=200)
 
     old_id = models.IntegerField(null=True, db_index=True)
+
     def __unicode__(self):
         return self.hostname
 
@@ -31,8 +31,10 @@ class Application(models.Model):
     def __unicode__(self):
         return '{0}'.format(self.name)
 
+
 class Slot(models.Model):
     name = models.CharField(max_length=50, null=False, unique=True)
+
     def __unicode__(self):
         return '{0}'.format(self.name)
 
@@ -42,7 +44,7 @@ class ApplicationVersion(models.Model):
         Application, related_name='versions'
     )
     version = models.CharField(max_length=50)
-    slot =  models.ForeignKey(
+    slot = models.ForeignKey(
         Slot, related_name='versions', null=True
     )
     vtime = models.DateTimeField(null=True)
@@ -60,11 +62,11 @@ class ApplicationVersion(models.Model):
 
     @staticmethod
     def get_slot_and_number(slot_string):
-        if '.'  in slot_string:
+        if '.' in slot_string:
             delim = '.'
-        else: 
+        else:
             delim = '-'
-        
+
         names = slot_string.split(delim)
 
         slot = slot_string
@@ -77,10 +79,11 @@ class ApplicationVersion(models.Model):
                     number = int(names[1])
                 if len(names) == 3:
                     try:
-                        vtime = timezone.make_aware(dateutil.parser.parse(names[2]))
+                        vtime = timezone.make_aware(
+                            dateutil.parser.parse(names[2]))
                     except:
                         pass
-            elif len(names) > 1: 
+            elif len(names) > 1:
                 slot = delim.join(names[:-1])
                 number = int(names[-1])
             else:
@@ -96,6 +99,7 @@ class Option(models.Model):
     is_standalone = models.BooleanField(default=False)
 
     old_id = models.IntegerField(null=True)
+
     def __unicode__(self):
         return self.description
 
@@ -105,6 +109,7 @@ class SetupProject(models.Model):
     description = models.CharField(max_length=200)
 
     old_id = models.IntegerField(null=True)
+
     def __unicode__(self):
         return self.description
 
@@ -116,9 +121,9 @@ class JobDescription(models.Model):
         Option, null=True, related_name='job_descriptions')
     setup_project = models.ForeignKey(
         SetupProject, null=True, related_name='job_descriptions')
-    
+
     old_id = models.IntegerField(null=True)
-    
+
     def __unicode__(self):
         return '{0} (id)   {1}  {2}  {3}'.format(
             self.id,
@@ -132,6 +137,7 @@ class Platform(models.Model):
     cmtconfig = models.CharField(max_length=100, unique=True)
 
     old_id = models.IntegerField(null=True)
+
     def __unicode__(self):
         return self.cmtconfig
 
@@ -141,6 +147,7 @@ class RequestedPlatform(models.Model):
     cmtconfig = models.ForeignKey(Platform)
 
     old_id = models.IntegerField(null=True)
+
     class Meta:
         unique_together = ("job_description", "cmtconfig")
 
@@ -164,7 +171,8 @@ class Job(models.Model):
     old_id = models.IntegerField(null=True)
 
     def save(self, *args, **kwargs):
-        super(Job, self).save(*args, **kwargs) # Call the "real" save() method.
+        # Call the "real" save() method.
+        super(Job, self).save(*args, **kwargs)
         # Insert version time if not exists
         version = self.job_description.application_version
         if not version.vtime:
@@ -187,14 +195,17 @@ class Handler(models.Model):
     description = models.CharField(max_length=200)
 
     old_id = models.IntegerField(null=True)
+
     def __unicode__(self):
         return self.name
+
 
 class JobHandler(models.Model):
     job_description = models.ForeignKey(JobDescription)
     handler = models.ForeignKey(Handler)
 
     old_id = models.IntegerField(null=True)
+
     class Meta:
         unique_together = ("job_description", "handler")
 
@@ -203,8 +214,10 @@ class JobHandler(models.Model):
             self.job_description.id, self.handler
         )
 
+
 class AttributeGroup(models.Model):
     name = models.CharField(max_length=255, unique=True)
+
 
 class Attribute(models.Model):
     name = models.CharField(max_length=512, db_index=True)
@@ -213,8 +226,10 @@ class Attribute(models.Model):
     groups = models.ManyToManyField(AttributeGroup, related_name='attributes')
 
     old_id = models.IntegerField(null=True)
+
     def get_result_type(self):
         return globals()["Result" + self.dtype]
+
     def __unicode__(self):
         return '{0} (id)  {1}  --  {2}  {3}'.format(
             self.id, self.name, self.dtype, self.description
@@ -236,12 +251,14 @@ class AttributeThreshold(models.Model):
 def content_file_name(instance, filename):
     return '/'.join([str(instance.job.job_description.pk), str(instance.job.pk), filename])
 
+
 class JobResult(models.Model):
     job = models.ForeignKey(Job, related_name='results')
     attr = models.ForeignKey(
         Attribute, related_name='jobresults')
 
     old_id = models.IntegerField(null=True)
+
     def get_value(self):
         subtype = self.attr.get_result_type()
         val = subtype.objects.get(pk=self.pk)
@@ -252,44 +269,52 @@ class JobResult(models.Model):
             self.job.id, self.job_attribute
         )
 
+
 class ResultFloat(JobResult):
     data = models.FloatField()
+
 
 class ResultInteger(JobResult):
     data = models.IntegerField()
 
+
 class ResultString(JobResult):
     data = models.TextField()
+
 
 class ResultFile(JobResult):
     data = models.FileField()
 
+
 class ResultStringSync(models.Model):
-    jobresult_ptr_id=models.IntegerField()
+    jobresult_ptr_id = models.IntegerField()
     data = models.TextField()
 
     class Meta:
         managed = False
         db_table = "lhcbpr_api_resultstring"
 
+
 class ResultIntegerSync(models.Model):
-    jobresult_ptr_id=models.IntegerField()
+    jobresult_ptr_id = models.IntegerField()
     data = models.TextField()
 
     class Meta:
         managed = False
         db_table = "lhcbpr_api_resultinteger"
 
+
 class ResultFloatSync(models.Model):
-    jobresult_ptr_id=models.IntegerField()
+    jobresult_ptr_id = models.IntegerField()
     data = models.TextField()
 
     class Meta:
         managed = False
         db_table = "lhcbpr_api_resultfloat"
 
+
 class ResultFileSync(models.Model):
-    jobresult_ptr_id=models.IntegerField()
+    jobresult_ptr_id = models.IntegerField()
     data = models.TextField()
 
     class Meta:
@@ -297,15 +322,11 @@ class ResultFileSync(models.Model):
         db_table = "lhcbpr_api_resultfile"
 
 
-
-
 # custom path to save the files in format
 # MEDIA_ROOT/job_description_id/job_id/filename
 
 # custom path to save the files in format
 # MEDIA_ROOT/job_description_id/job_id/filename
-
-
 
 
 class HandlerResult(models.Model):
@@ -314,6 +335,7 @@ class HandlerResult(models.Model):
     is_success = models.BooleanField(default=False)
 
     old_id = models.IntegerField(null=True)
+
     def __unicode__(self):
         return '{0} (job_id) {1} --- {2}'.format(
             self.job.id, self.handler.name, self.is_success
@@ -324,5 +346,6 @@ class AddedResult(models.Model):
     identifier = models.CharField(max_length=64)
 
     old_id = models.IntegerField(null=True)
+
     def __unicode__(self):
         return self.identifier
