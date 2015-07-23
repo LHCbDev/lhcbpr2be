@@ -400,11 +400,13 @@ class TrendsViewSet(viewsets.ViewSet):
         logger.info('Trends started')
         context = self.get_serializer_context(request)
         logger.info('Context is read')
+        logger.info(context)
         logger.info('Retrieving results from service')
         service = JobResultsService()
         results = service.get_results_per_attr_per_version(context)
+        logger.info('results fetched !')
         total_count = service.get_attrs_count(context)
-
+        logger.info('Counted !')
         logger.info('Looping over {0} results'.format(len(results)))        
         for result_index in range(len(results)):
             for version_index in range(0, len(results[result_index]['values'])):
@@ -433,19 +435,22 @@ class TrendsViewSet(viewsets.ViewSet):
         result = {
             "app": None, 
             "options": None, 
+            "versions": None, 
             "request": request,
             "page": 1,
             "page_size": 10
         }
-        if 'app' in request.query_params:
+        if 'app' in request.query_params and request.query_params['app'].strip() != '':
             result["app"] = [int(id) for id in request.query_params['app'].split(',')]
-        if 'options' in request.query_params:
+        if 'options' in request.query_params and request.query_params['options'].strip() != '':
             result["options"] = [int(id) for id in request.query_params['options'].split(',')]
-        if 'attr_filter' in request.query_params:
+        if 'versions' in request.query_params and request.query_params['versions'].strip() != '':
+            result["versions"] = [int(id) for id in request.query_params['versions'].split(',')]
+        if 'attr_filter' in request.query_params and request.query_params['attr_filter'].strip() != '':
             result['attr_filter'] = request.query_params['attr_filter']
-        if 'page' in request.query_params:
+        if 'page' in request.query_params and request.query_params['page'].strip() != '':
             result['page'] = int(request.query_params['page'])
-        if 'page_size' in request.query_params:
+        if 'page_size' in request.query_params and request.query_params['page_size'].strip() != '':
             result['page_size'] = int(request.query_params['page_size'])
         return result
 

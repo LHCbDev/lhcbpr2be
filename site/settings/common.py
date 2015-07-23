@@ -116,10 +116,11 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'simple'
         },
-        # 'file': {
-        #     'class': 'logging.FileHandler',
-        #     'filename': '/afs/cern.ch/lhcb/software/webapps/LHCbPR2Test/api/debug.log',
-        # },
+        'file': {
+            'class': 'logging.FileHandler',
+            'formatter': 'simple',
+            'filename': '/afs/cern.ch/lhcb/software/webapps/LHCbPR2Test/api/data/debug.log',
+        }
     },
     'loggers': {
         '': {

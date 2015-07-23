@@ -47,8 +47,9 @@ class JobResultsService:
         current_result_index = -1
         current_version = None
         current_version_index = -1
-        logger.info('Looping over Queryset')
+        logger.info('Looping over Queryset: {0} elements'.format(len(queryset)))
         i = 1
+
         for item in queryset:
             # logger.info('Handeling item {0}'.format(i))
             i = i + 1
@@ -77,12 +78,16 @@ class JobResultsService:
             else:
                 results[current_result_index]['values'][current_version_index]['results'].append(item['resultinteger'] / 1000.0)
         
-        return results
+        startIndex = ( context['page'] - 1 ) * context['page_size']
+        endIndex = context['page'] * context['page_size']
+        return results[startIndex:endIndex]
 
-    def get_attrs_count(self, context):
+    def get_attrs_count(self, context, only_numeric = True):
         attrs = Attribute.objects
         if 'attr_filter' in context and context['attr_filter']:
             attrs = attrs.filter(name__icontains = context['attr_filter'])
+        if only_numeric:
+            attrs = attrs.filter(dtype__in = ['Float', 'Integer'])
         count = attrs.count()
         logger.info("Attributes count is {0}".format(count))
         return count
