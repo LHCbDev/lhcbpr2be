@@ -2,7 +2,7 @@
 
 
 API_PORT=${DJANGO_HTTP_PORT:-8080}
-API_HOST=${LHCBPR_API_1_PORT_8080_TCP_ADDR:-127.0.0.1}
+API_HOST=0.0.0.0
 
 echo "Bootstrap..."
 ./scripts/bootstrap
