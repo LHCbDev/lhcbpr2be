@@ -14,7 +14,7 @@ import os
 BASE_DIR = os.path.join(os.path.dirname(__file__), os.pardir)
 DB_DIR = os.path.join(BASE_DIR, 'data')
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-STATIC_URL = os.getenv('DJANGO_STATIC_URL', '/static')
+STATIC_URL = os.getenv('DJANGO_STATIC_URL', '/static/')
 DATA_ROOT = os.path.join(BASE_DIR, 'data')
 ROOT_URLCONF = 'urls'
 

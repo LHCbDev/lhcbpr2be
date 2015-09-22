@@ -4,4 +4,4 @@ echo "Bootstrap..."
 ./scripts/bootstrap
 
 echo "Run server..."
-./site/manage.py runserver
+./site/manage.py runserver 0.0.0.0:8080
