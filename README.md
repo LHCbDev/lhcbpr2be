@@ -1,5 +1,6 @@
 # LHCbPR service
 
+
 ## Installation
 
 1. `git clone ssh://git@gitlab.cern.ch:7999/lhcb-core/LHCbPR2BE`
@@ -29,6 +30,11 @@ At the developer's servers you can populate the database by executing the follow
 
 1. `python site/manage.py migrate`
 1. `python manage.py populate` (optional, fill empty database with test data)
+
+### Docker
+
+TODO
+
 
 # Configuration
 
