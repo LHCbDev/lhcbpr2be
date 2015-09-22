@@ -1,7 +1,11 @@
 #!/bin/sh
 
+
+API_PORT=${DJANGO_HTTP_PORT:-8080}
+API_HOST=${LHCBPR_API_1_PORT_8080_TCP_ADDR:-127.0.0.1}
+
 echo "Bootstrap..."
 ./scripts/bootstrap
 
 echo "Run server..."
-./site/manage.py runserver 0.0.0.0:8080
+./site/manage.py runserver ${API_HOST}:${API_PORT}
