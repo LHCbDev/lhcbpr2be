@@ -1,3 +1,4 @@
+#test
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.utils.dateparse import parse_datetime
@@ -23,8 +24,7 @@ class Command(BaseCommand):
     help = "Import job JSON result file (json_results)"
 
     def add_arguments(self, parser):
-        #parser.add_argument('json', nargs='+')
-        pass
+        parser.add_argument('dir', help="Directory with zipped results")
 
     def process_results(self, unzipper):
         data = json.loads(unzipper.read('json_results'))
@@ -154,8 +154,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         ext = '*.zip'
-        zip_files = glob(os.path.join(settings.ZIP_DIR, ext))
-
+        zip_files = glob(os.path.join(options['dir'], ext))
+        logger.info(options['dir'])
         for zip_file in zip_files:
             name_noext = os.path.basename(zip_file[:-(len(ext) - 1)])
             logger.info("Zip file {}".format(name_noext))
@@ -166,7 +166,7 @@ class Command(BaseCommand):
                     "Zip file '{}' was proccessed earlier. Abort.".format(
                         name_noext)
                 )
-                # continue
+                continue
             logger.info("Process zip file '{}'".format(name_noext))
 
             unzipper = zipfile.ZipFile(zip_file)

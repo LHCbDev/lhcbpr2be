@@ -7,31 +7,31 @@ https://docs.djangoproject.com/en/1.7/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.7/ref/settings/
 """
-import settings.private as private
-
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
-BASE_DIR = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
+
+# =============================================================================
+BASE_DIR = os.path.join(os.path.dirname(__file__), os.pardir)
 DB_DIR = os.path.join(BASE_DIR, 'data')
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_URL = os.getenv('DJANGO_STATIC_URL', '/static')
 DATA_ROOT = os.path.join(BASE_DIR, 'data')
+ROOT_URLCONF = 'urls'
 
+# =============================================================================
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'vjj#edcdft(^hr-%758ljku*=$ocnjed=qv$v)5v9r2^u6o^q#'
-
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'secret')
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-TEMPLATE_DEBUG = True
-
+DEBUG = os.getenv('DJANGO_DEBUG', True)
+TEMPLATE_DEBUG = DEBUG
 ALLOWED_HOSTS = []
 
-
+# =============================================================================
 # Application definition
-
+# =============================================================================
 INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.auth',
@@ -44,7 +44,7 @@ INSTALLED_APPS = (
     'lhcbpr_api',
     'lhcbpr'  # v1
 )
-
+# =============================================================================
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -54,34 +54,32 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
-
-ROOT_URLCONF = 'urls'
-
+# =============================================================================
 WSGI_APPLICATION = 'wsgi.application'
-
-
+# =============================================================================
 # Database
 # https://docs.djangoproject.com/en/1.7/ref/settings/#databases
-
+# =============================================================================
 DATABASES = {
-    'default': private.V2_TEST_DB,
-    'v1test': private.V1_TEST_DB,
-    'v1': private.V1_DB
+    'default': {
+        'NAME': os.getenv('MYSQL_DATABASE', 'lhcbpr'),
+        'USER': os.getenv('MYSQL_USER', ''),
+        'PASSWORD': os.getenv('MYSQL_PASSWORD', ''),
+        'ENGINE': os.getenv('DJANGO_DB_DEFAULT_ENGINE', 'django.db.backends.mysql'),
+        'HOST': os.getenv('DJANGO_DB_HOST', 'lhcbpr-mysql'),
+        'PORT': os.getenv('MYSQL_PORT', 3306),
+    }
 }
+# =============================================================================
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.7/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_L10N = True
-
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
@@ -115,11 +113,6 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'simple'
-        },
-        'file': {
-            'class': 'logging.FileHandler',
-            'formatter': 'simple',
-            'filename': '/afs/cern.ch/lhcb/software/webapps/LHCbPR2Test/api/data/debug.log',
         }
     },
     'loggers': {
@@ -129,7 +122,6 @@ LOGGING = {
         },
     },
 }
-
 
 ZIP_DIR = DB_DIR
 JOBS_UPLOAD_DIR = os.path.join(DATA_ROOT, 'jobs')

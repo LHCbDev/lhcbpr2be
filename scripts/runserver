@@ -1,0 +1,3 @@
+#!/bin/sh
+
+./site/manage.py runserver

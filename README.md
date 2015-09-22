@@ -29,3 +29,15 @@ At the developer's servers you can populate the database by executing the follow
 
 1. `python site/manage.py migrate`
 1. `python manage.py populate` (optional, fill empty database with test data)
+
+# Configuration
+
+- DJANGO_LOG_LEVEL: default `INFO`
+- DJANGO_DB_DEFAULT_ENGINE: default `django.db.backends.mysql`,
+- DJANGO_DB_DEFAULT_NAME: default ''
+- DJANGO_DB_DEFAULT_USER: default ''
+- DJANGO_DB_DEFAULT_PASSWORD: default ''
+- DJANGO_DB_DEFAULT_HOST': default '127.0.0.1'
+- DJANGO_DB_DEFAULT_PORT': default '3306'
+- DJANGO_STATIC_URL: default '/static'
+- DJANGO_SECRET_KEY: default 'secret'
