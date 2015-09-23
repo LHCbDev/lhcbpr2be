@@ -63,7 +63,7 @@ router.register(
 )
 
 router.register(
-    r"trends", 
+    r"trends",
     views.TrendsViewSet,
     base_name = "trends"
 )
@@ -85,8 +85,8 @@ router.register(
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.
 urlpatterns = [
-    url(r'^', include(router.urls)),
-    url(r'^', include(default_router.urls)),
+    url(r'^api/', include(router.urls)),
+    url(r'^api/', include(default_router.urls)),
 
     url(r'^api-auth/',
         include('rest_framework.urls', namespace='rest_framework'))
