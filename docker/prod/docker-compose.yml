@@ -1,0 +1,20 @@
+lhcbpr-mysql:
+  container_name: lhcbpr-mysql-prod
+  image: mysql:5.5
+  restart: always
+  container_name: lhcbpr-mysql
+
+  env_file: ../../env/env-db
+  ports:
+    - "3306:3306"
+
+lhcbpr-api:
+  container_name: lhcbpr-api-prod
+  extends:
+    file: ../common/docker-api.yml
+    service: lhcbpr-api
+  dockerfile: docker/prod/Dockerfile
+  links:
+    - lhcbpr-mysql:lhcbpr-mysql
+  ports:
+    - "80:80"

@@ -15,8 +15,8 @@ ADD . /code
 #   git pull origin prepare-for-docker  &&  \
 #   echo "checkout completed"
 
-WORKDIR /code
+
 
 CMD ["./scripts/runserver"]
 
-EXPOSE 8080
+EXPOSE 80
