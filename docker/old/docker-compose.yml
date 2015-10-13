@@ -1,0 +1,12 @@
+lhcbpr-api:
+  container_name: lhcbpr-api-old
+  extends:
+    file: ../common/docker-api.yml
+    service: lhcbpr-api
+  dockerfile: docker/old/Dockerfile
+  env_file:
+    - ../../env/old/env-api
+  volumes:
+    - ../..:/code
+  ports:
+    - "80:80"

@@ -40,6 +40,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_extensions',
+    'fixture_magic',
     'rest_framework',
     'lhcbpr_api',
     'lhcbpr'  # v1
@@ -65,9 +66,10 @@ DATABASES = {
         'NAME': os.getenv('MYSQL_DATABASE', 'lhcbpr'),
         'USER': os.getenv('MYSQL_USER', ''),
         'PASSWORD': os.getenv('MYSQL_PASSWORD', ''),
-        'ENGINE': os.getenv('DJANGO_DB_DEFAULT_ENGINE', 'django.db.backends.mysql'),
-        'HOST': os.getenv('DJANGO_DB_HOST', 'lhcbpr-mysql'),
         'PORT': os.getenv('MYSQL_PORT', 3306),
+
+        'ENGINE': os.getenv('DJANGO_DB_DEFAULT_ENGINE', 'django.db.backends.mysql'),
+        'HOST': os.getenv('DJANGO_DB_DEFAULT_HOST', 'lhcbpr-mysql'),
     }
 }
 # =============================================================================
