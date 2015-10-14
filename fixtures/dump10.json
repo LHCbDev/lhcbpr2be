@@ -297,5 +297,75 @@
     },
     "model": "lhcbpr_api.jobresult",
     "pk": 1
+},
+{
+    "fields": {
+        "data": 0.1
+    },
+    "model": "lhcbpr_api.resultfloat",
+    "pk": 10
+},
+{
+    "fields": {
+        "data": 0.1
+    },
+    "model": "lhcbpr_api.resultfloat",
+    "pk": 9
+},
+{
+    "fields": {
+        "data": 0.2
+    },
+    "model": "lhcbpr_api.resultfloat",
+    "pk": 8
+},
+{
+    "fields": {
+        "data": 0.2
+    },
+    "model": "lhcbpr_api.resultfloat",
+    "pk": 7
+},
+{
+    "fields": {
+        "data": 0.0
+    },
+    "model": "lhcbpr_api.resultfloat",
+    "pk": 6
+},
+{
+    "fields": {
+        "data": 1.3
+    },
+    "model": "lhcbpr_api.resultfloat",
+    "pk": 5
+},
+{
+    "fields": {
+        "data": 1.3
+    },
+    "model": "lhcbpr_api.resultfloat",
+    "pk": 4
+},
+{
+    "fields": {
+        "data": 1.3
+    },
+    "model": "lhcbpr_api.resultfloat",
+    "pk": 3
+},
+{
+    "fields": {
+        "data": 2317.348
+    },
+    "model": "lhcbpr_api.resultfloat",
+    "pk": 2
+},
+{
+    "fields": {
+        "data": 3191.311
+    },
+    "model": "lhcbpr_api.resultfloat",
+    "pk": 1
 }
 ]
