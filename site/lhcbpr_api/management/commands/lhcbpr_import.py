@@ -1,4 +1,4 @@
-#test
+# test
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.utils.dateparse import parse_datetime
@@ -9,6 +9,7 @@ from lhcbpr_api.models import (
     Attribute, AttributeGroup
 )
 
+from dateutil import parser
 import pytz
 from glob import glob
 import zipfile
@@ -33,7 +34,8 @@ class Command(BaseCommand):
         app, _ = Application.objects.get_or_create(name=data['app_name'])
         ver, _ = ApplicationVersion.objects.get_or_create(
             application=app,
-            version='v45r10p1'  # data['app_version']
+            vtime=data['app_version_datetime'],
+            version=data['app_version']
         )
 
         option = Option.objects.filter(description=data['opt_name'])
@@ -76,16 +78,16 @@ class Command(BaseCommand):
             cmtconfig=data['CMTCONFIG']['platform']
         )
 
-        time_start = parse_datetime(data['time_start'])
-        time_end = parse_datetime(data['time_end'])
-        tz = pytz.timezone("CET")
-
+        time_start = parser.parse(data['time_start'])
+        time_end = parser.parse(data['time_end'])
+        #tz = pytz.timezone("CET")
+        #print("SASHA " + time_start)
         job = Job.objects.create(
             job_description=jd,
             host=host,
             platform=platform,
-            time_start=tz.localize(time_start, is_dst=None),
-            time_end=tz.localize(time_end, is_dst=None),
+            time_start=time_start,
+            time_end=time_end,
             status=data['status'],
             is_success=True
         )
@@ -93,7 +95,7 @@ class Command(BaseCommand):
         logger.info("Created new job (id={})".format(job.id))
         self.process_attributes(job, data['JobAttributes'], unzipper)
 
-        #job.delete()
+        # job.delete()
 
     def process_attributes(self, job, attrs, unzipper):
 
@@ -136,7 +138,7 @@ class Command(BaseCommand):
                 "Created {}={} (id={})".format(attr.name,
                                                result.data, result.id)
             )
-            #result.delete()
+            # result.delete()
 
     def process_file(self, job_id, name, file):
         path_dir = os.path.join(settings.JOBS_UPLOAD_DIR, str(job_id))
