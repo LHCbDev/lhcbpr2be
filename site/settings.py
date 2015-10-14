@@ -16,6 +16,8 @@ DB_DIR = os.path.join(BASE_DIR, 'data')
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATIC_URL = os.getenv('DJANGO_STATIC_URL', '/static/')
 DATA_ROOT = os.path.join(BASE_DIR, 'data')
+MEDIA_ROOT = DATA_ROOT
+MEDIA_URL = '/media/'
 ROOT_URLCONF = 'urls'
 
 # =============================================================================
@@ -73,7 +75,6 @@ DATABASES = {
     }
 }
 # =============================================================================
-
 # Internationalization
 # https://docs.djangoproject.com/en/1.7/topics/i18n/
 

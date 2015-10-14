@@ -1,12 +1,15 @@
+from django.conf import settings
 from django.conf.urls import url, include
-from rest_framework import routers
-from lhcbpr_api import views
+from django.conf.urls.static import static
+# =============================================================================
 from rest_framework.routers import DefaultRouter
 from rest_framework_extensions.routers import ExtendedDefaultRouter
-
-
+# =============================================================================
+from lhcbpr_api import views
+# =============================================================================
 router = ExtendedDefaultRouter()
 default_router = DefaultRouter()
+# =============================================================================
 
 router.register(r'applications', views.ApplicationViewSet)
 router.register(r'versions', views.ApplicationVersionViewSet)
@@ -20,6 +23,7 @@ router.register(r'handlers', views.HandlerViewSet)
 router.register(r'platforms', views.PlatformViewSet)
 router.register(r'hosts', views.HostViewSet)
 router.register(r'results', views.JobResultViewSet)
+# =============================================================================
 
 router_jobs = router.register(r'jobs', views.JobViewSet, base_name='job')
 router_jobs.register(r'hosts',
@@ -38,11 +42,6 @@ router_jobs.register(r'results',
                      views.JobResultNoJobViewSet,
                      base_name='jobs-results',
                      parents_query_lookups=['job'])
-
-router_jd.register(r'jobs', views.JobViewSet, base_name='jobdescription-job',
-                   parents_query_lookups=['job_description'])
-router_jd.register(r'options', views.OptionViewSet, base_name="jobdescription-option",
-                   parents_query_lookups=['job_descriptions'])
 
 router.register(
     r'result_by_opt_and_attr/(?P<option>[^/.]+)_(?P<attr>[^/.]+)', views.JobResultByOptionAndAttribute, base_name="result_by_opt_and_attr")
@@ -65,21 +64,26 @@ router.register(
 router.register(
     r"trends",
     views.TrendsViewSet,
-    base_name = "trends"
+    base_name="trends"
 )
 
 router.register(
     r"histograms",
     views.HistogramsViewSet,
-    base_name = "histograms"
+    base_name="histograms"
 )
+
+# =============================================================================
+router_jd.register(r'jobs', views.JobViewSet, base_name='jobdescription-job',
+                   parents_query_lookups=['job_description'])
+router_jd.register(r'options', views.OptionViewSet, base_name="jobdescription-option",
+                   parents_query_lookups=['job_descriptions'])
+# =============================================================================
 
 # router.register(
 #     r"active/options", views.ActiveOptionViewSet,
 #     base_name="options-active"
 # )
-
-
 
 
 # Wire up our API using automatic URL routing.
@@ -91,6 +95,7 @@ urlpatterns = [
     url(r'^api-auth/',
         include('rest_framework.urls', namespace='rest_framework'))
 ]
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # from django.conf.urls import patterns, include, url
 # from django.contrib import admin
