@@ -143,7 +143,7 @@ class Platform(models.Model):
 
 
 class RequestedPlatform(models.Model):
-    job_description = models.ForeignKey(JobDescription)
+    job_description = models.ForeignKey(JobDescription, related_name="job_descriptions")
     cmtconfig = models.ForeignKey(Platform)
 
     old_id = models.IntegerField(null=True)

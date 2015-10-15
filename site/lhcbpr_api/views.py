@@ -24,6 +24,7 @@ from lhcbpr_api.services import *
 import logging
 logger = logging.getLogger(__name__)
 
+
 class ApplicationViewSet(viewsets.ModelViewSet):
     queryset = Application.objects.all()
     serializer_class = ApplicationSerializer
@@ -38,6 +39,7 @@ class OptionViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = Option.objects.all()
     serializer_class = OptionSerializer
 
+
 class AttributeGroupViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = AttributeGroup.objects.all()
 
@@ -46,6 +48,7 @@ class AttributeGroupViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
             return AttributeGroupListSerializer
         else:
             return AttributeGroupRetrieveSerializer
+
 
 class AttributeViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = Attribute.objects.all()
@@ -85,6 +88,7 @@ class HandlerResultViewSet(viewsets.ModelViewSet):
 class JobResultViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = JobResult.objects.all()
     serializer_class = JobResultSerializer
+
 
 class JobResultNoJobViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = JobResult.objects.all()
@@ -146,13 +150,39 @@ class ActiveApplicationViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
     @list_route()
+    def platforms(self, request, pk):
+        result = []
+        id_field = 'platform__id'
+        name_field = 'platform__cmtconfig'
+
+        queryset = (
+            Job.objects
+            .select_related()
+            .values(id_field, name_field)
+            .filter(
+                job_description__application_version__application__id=pk)
+            .annotate(njobs=Count(id_field))
+            .order_by(name_field)
+        )
+
+        for cmtconfig in queryset:
+            result.append(
+                {"id": cmtconfig[id_field],
+                 "name": cmtconfig[name_field],
+                 "count": cmtconfig["njobs"]
+                 }
+            )
+
+        return Response(result)
+
+    @list_route()
     def versions(self, request, pk):
         id_field = 'job_description__application_version__id'
         name_field = 'job_description__application_version__version'
         time_field = 'job_description__application_version__vtime'
         slot_id_field = 'job_description__application_version__slot__id'
         slot_field = 'job_description__application_version__slot__name'
-        
+
         result = []
         # Releases
         queryset = (
@@ -163,7 +193,7 @@ class ActiveApplicationViewSet(viewsets.ViewSet):
                 job_description__application_version__slot__isnull=True,
                 job_description__application_version__application__id=pk)
             .annotate(njobs=Count(id_field))
-            .order_by('-'+time_field)
+            .order_by('-' + time_field)
         )
         releases = []
         for app in queryset:
@@ -171,10 +201,10 @@ class ActiveApplicationViewSet(viewsets.ViewSet):
                 {"id": app[id_field],
                  "name": app[name_field],
                  "count": app["njobs"]
-                }
+                 }
             )
         result.append({'name': 'Releases', 'values': releases})
-        
+
         if 'withNightly' in request.query_params and request.query_params['withNightly'] == "true":
             # Slots
             nightlyVersionNumber = 1
@@ -211,7 +241,7 @@ class ActiveApplicationViewSet(viewsets.ViewSet):
                 slot_values = []
                 for app in queryset_per_slot:
                     slot_values.append(
-                        {   
+                        {
                             "id": app[id_field],
                             "name": app[name_field],
                             "count": app["njobs"]
@@ -221,7 +251,7 @@ class ActiveApplicationViewSet(viewsets.ViewSet):
                 slot_record["count"] = slot["njobs"]
                 if slot_values:
                     result.append(slot_record)
-        
+
         return Response(result)
 
     @list_route()
@@ -304,12 +334,15 @@ class SearchJobsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
         if options:
             ids = options.split(',')
             queryset = queryset.filter(job_description__option__id__in=ids)
-        
+
+        platforms = self.request.query_params.get("platforms", None)
+        if platforms:
+            ids = platforms.split(',')
+            queryset = queryset.filter(platform__id__in=ids)
+
         return queryset.order_by('-time_end')
         # serializer = JobListSerializer(queryset, many=True, read_only=True, context={'request': request})
         # return Response(serializer.data)
-
-
 
     def retrieve(self, request, pk=None):
         queryset = Job.objects.all()
@@ -336,7 +369,7 @@ class SearchJobsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
                  "count": app["njobs"]
                  }
             )
-        serializer = ActiveItemSerializer(result,many=True, read_only=True)
+        serializer = ActiveItemSerializer(result, many=True, read_only=True)
         return Response(serializer.data)
 
     @list_route()
@@ -369,9 +402,10 @@ class SearchJobsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
         serializer = ActiveItemSerializer(result, many=True, read_only=True)
         return Response(serializer.data)
 
+
 class CompareJobsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     serializer_class = AttributesWithJobResultsSerializer
-    
+
     def get_queryset(self):
         context = self.get_serializer_context()
         results = Attribute.objects
@@ -387,12 +421,13 @@ class CompareJobsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
         if 'ids' in self.request.query_params:
             result["ids"] = [int(id) for id in self.request.query_params['ids'].split(',')]
         if 'attrs' in self.request.query_params:
-            result["attrs"] = [int(id) for id in self.request.query_params['attrs'].split(',')]        
-        
+            result["attrs"] = [int(id) for id in self.request.query_params['attrs'].split(',')]
+
         if 'contains' in self.request.query_params:
             result['contains'] = self.request.query_params['contains']
 
         return result
+
 
 class TrendsViewSet(viewsets.ViewSet):
 
@@ -407,7 +442,7 @@ class TrendsViewSet(viewsets.ViewSet):
         logger.info('results fetched !')
         total_count = service.get_attrs_count(context)
         logger.info('Counted !')
-        logger.info('Looping over {0} results'.format(len(results)))        
+        logger.info('Looping over {0} results'.format(len(results)))
         for result_index in range(len(results)):
             for version_index in range(0, len(results[result_index]['values'])):
                 current_version = results[result_index]['values'][version_index]['version']
@@ -423,7 +458,8 @@ class TrendsViewSet(viewsets.ViewSet):
                     'average': average,
                     'deviation': deviation
                 }
-            results[result_index]['values'] = sorted(results[result_index]['values'], key = itemgetter('version'))
+            results[result_index]['values'] = sorted(
+                results[result_index]['values'], key=itemgetter('version'))
         logger.info('Sending results')
         logger.info(len(results))
         return Response({
@@ -433,9 +469,9 @@ class TrendsViewSet(viewsets.ViewSet):
 
     def get_serializer_context(self, request):
         result = {
-            "app": None, 
-            "options": None, 
-            "versions": None, 
+            "app": None,
+            "options": None,
+            "versions": None,
             "request": request,
             "page": 1,
             "page_size": 10
@@ -454,8 +490,9 @@ class TrendsViewSet(viewsets.ViewSet):
             result['page_size'] = int(request.query_params['page_size'])
         return result
 
+
 class HistogramsViewSet(viewsets.ViewSet):
-    
+
     def list(self, request):
         context = self.get_serializer_context(request)
         service = JobResultsService()
@@ -472,9 +509,9 @@ class HistogramsViewSet(viewsets.ViewSet):
                 for version_index in range(0, len(results[result_index]['values'])):
                     numbers = results[result_index]['values'][version_index]['results']
                     if context_min:
-                        numbers = [ i for i in numbers if i >= context_min ]
+                        numbers = [i for i in numbers if i >= context_min]
                     if context_max:
-                        numbers = [ i for i in numbers if i <= context_max ]
+                        numbers = [i for i in numbers if i <= context_max]
                     results[result_index]['values'][version_index]['results'] = numbers
             # Compute min, max values and the interval width for each attribute
             for result_index in range(0, len(results)):
@@ -494,7 +531,8 @@ class HistogramsViewSet(viewsets.ViewSet):
                             max_value = temp
                 results[result_index]['min_value'] = min_value
                 results[result_index]['max_value'] = max_value
-                results[result_index]['interval_width'] = (max_value - min_value) / float(context_intervals - 1)
+                results[result_index]['interval_width'] = (
+                    max_value - min_value) / float(context_intervals - 1)
             # Compute jobs number per interval
             for result_index in range(0, len(results)):
                 interval_width = results[result_index]['interval_width']
@@ -503,7 +541,7 @@ class HistogramsViewSet(viewsets.ViewSet):
                     for version_index in range(0, len(results[result_index]['values'])):
                         current_version = results[result_index]['values'][version_index]['version']
                         numbers = results[result_index]['values'][version_index]['results']
-                        jobs = [ 0 for i in range(0, int(context_intervals)) ]
+                        jobs = [0 for i in range(0, int(context_intervals))]
                         for n in numbers:
                             job_index = n - min_value
                             job_index = job_index / interval_width
@@ -516,7 +554,7 @@ class HistogramsViewSet(viewsets.ViewSet):
                 else:
                     for version_index in range(0, len(results[result_index]['values'])):
                         current_version = results[result_index]['values'][version_index]['version']
-                        jobs = [ 0 for i in range(0, int(context_intervals)) ]
+                        jobs = [0 for i in range(0, int(context_intervals))]
                         results[result_index]['values'][version_index] = {
                             'version': current_version,
                             'jobs': jobs
@@ -530,13 +568,13 @@ class HistogramsViewSet(viewsets.ViewSet):
         result = {
             'request': request,
             'app': None,
-            'options': None, 
+            'options': None,
             'versions': None,
             'min': None,
             'max': None,
             'intervals': None,
             'attr_filter': None,
-            'page': 1, 
+            'page': 1,
             'page_size': 10
         }
         if 'app' in request.query_params:
