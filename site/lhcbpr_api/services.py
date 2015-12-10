@@ -25,16 +25,18 @@ class JobResultsService:
             queryset = queryset.filter(job__job_description__application_version__application__id__in = context['app'])
         if 'options' in context and context['options']:
             queryset = queryset.filter(job__job_description__option__id__in = context['options'])
+        if 'platforms' in context and context['platforms']:
+            queryset = queryset.filter(job__platform__id__in = context['platforms'])
         if 'versions' in context and context['versions']:
             queryset = queryset.filter(job__job_description__application_version__id__in = context['versions'])
-            
+
         queryset = queryset.select_related(
-            'attr__name', 
+            'attr__name',
             'job__job_description__application_version__version'
         )
         queryset = queryset.order_by('attr__id', 'job__job_description__application_version__version')
         queryset = queryset.values(
-            'attr__id', 
+            'attr__id',
             'attr__name',
             'job__job_description__application_version__version',
             'resultinteger',
@@ -77,7 +79,7 @@ class JobResultsService:
                 results[current_result_index]['values'][current_version_index]['results'].append(item['resultfloat'] / 1000.0)
             else:
                 results[current_result_index]['values'][current_version_index]['results'].append(item['resultinteger'] / 1000.0)
-        
+
         startIndex = ( context['page'] - 1 ) * context['page_size']
         endIndex = context['page'] * context['page_size']
         return results[startIndex:endIndex]

@@ -482,6 +482,8 @@ class TrendsViewSet(viewsets.ViewSet):
             result["options"] = [int(id) for id in request.query_params['options'].split(',')]
         if 'versions' in request.query_params and request.query_params['versions'].strip() != '':
             result["versions"] = [int(id) for id in request.query_params['versions'].split(',')]
+        if 'platforms' in request.query_params and request.query_params['platforms'].strip() != '':
+            result["platforms"] = [int(id) for id in request.query_params['platforms'].split(',')]
         if 'attr_filter' in request.query_params and request.query_params['attr_filter'].strip() != '':
             result['attr_filter'] = request.query_params['attr_filter']
         if 'page' in request.query_params and request.query_params['page'].strip() != '':
