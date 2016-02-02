@@ -59,6 +59,7 @@ static/
 migrations/
 
 # Private
-private.py
+private*
 data/jobs
-env/old
+envs/*
+!envs/default.env

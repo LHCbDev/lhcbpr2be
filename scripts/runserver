@@ -1,5 +1,9 @@
 #!/bin/sh
 
+if [ $# -ne 0 ]
+then
+    . envs/$1.env
+fi
 
 API_PORT=${DJANGO_HTTP_PORT:-80}
 API_HOST=0.0.0.0

@@ -5,7 +5,6 @@ from lhcbpr_api.models import (Application, ApplicationVersion, Option,
                                JobHandler, AddedResult, Job, Host,
                                JobResult, Platform)
 from rest_framework import serializers
-from rest_framework.pagination import PaginationSerializer
 from rest_framework_extensions.fields import ResourceUriField
 
 
@@ -229,12 +228,6 @@ class JobResultSerializer(serializers.HyperlinkedModelSerializer):
         model = JobResult
         fields = ('attr', 'value','job', )
 
-class PaginatedJobResultSerializer(PaginationSerializer):
-    """
-    Serializes page objects of user querysets.
-    """
-    class Meta:
-        object_serializer_class = JobResultSerializer
 
 class ActiveItemSerializer(serializers.Serializer):
     id=serializers.IntegerField()

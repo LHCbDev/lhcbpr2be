@@ -15,8 +15,9 @@ BASE_DIR = os.path.join(os.path.dirname(__file__), os.pardir)
 DB_DIR = os.path.join(BASE_DIR, 'data')
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATIC_URL = os.getenv('DJANGO_STATIC_URL', '/static/')
-DATA_ROOT = os.path.join(BASE_DIR, 'data')
-MEDIA_ROOT = DATA_ROOT
+
+DATA_ROOT = os.getenv('DATA_ROOT', os.path.join(BASE_DIR, 'data'))
+MEDIA_ROOT = os.getenv('MEDIA_ROOT', os.path.join(BASE_DIR, 'data'))
 MEDIA_URL = '/media/'
 ROOT_URLCONF = 'urls'
 
@@ -28,7 +29,7 @@ ROOT_URLCONF = 'urls'
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'secret')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', True)
-TEMPLATE_DEBUG = DEBUG
+
 ALLOWED_HOSTS = []
 
 # =============================================================================
@@ -41,7 +42,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django_extensions',
+    # 'django_extensions',
     'fixture_magic',
     'rest_framework',
     'lhcbpr_api',
@@ -65,13 +66,12 @@ WSGI_APPLICATION = 'wsgi.application'
 # =============================================================================
 DATABASES = {
     'default': {
-        'NAME': os.getenv('MYSQL_DATABASE', 'lhcbpr'),
-        'USER': os.getenv('MYSQL_USER', ''),
-        'PASSWORD': os.getenv('MYSQL_PASSWORD', ''),
-        'PORT': os.getenv('MYSQL_PORT', 3306),
-
-        'ENGINE': os.getenv('DJANGO_DB_DEFAULT_ENGINE', 'django.db.backends.mysql'),
-        'HOST': os.getenv('DJANGO_DB_DEFAULT_HOST', 'lhcbpr-mysql'),
+        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.mysql'),
+        'NAME': os.getenv('DB_DATABASE', 'lhcbpr'),
+        'USER': os.getenv('DB_USER', ''),
+        'PASSWORD': os.getenv('DB_PASSWORD', ''),
+        'PORT': os.getenv('DB_PORT', 3306),
+        'HOST': os.getenv('DB_HOST', 'lhcbpr-mysql'),
     }
 }
 # =============================================================================
@@ -91,10 +91,12 @@ USE_TZ = True
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
-        'rest_framework.renderers.JSONPRenderer',
+        'rest_framework_jsonp.renderers.JSONPRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
     ),
-    'PAGINATE_BY': 10,                 # Default to 10
+    'DEFAULT_FILTER_BACKENDS': ('rest_framework.filters.DjangoFilterBackend',),
+    'DEFAULT_PAGINATION_CLASS': 'lhcbpr_api.pagination.ApiPagination',
+    'PAGE_SIZE': 10,                 # Default to 10
     # Allow client to override, using `?page_size=xxx`.
     'PAGINATE_BY_PARAM': 'page_size',
     # Maximum limit allowed when using `?page_size=xx
@@ -125,6 +127,13 @@ LOGGING = {
         },
     },
 }
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'APP_DIRS': True,
+    },
+]
 
 ZIP_DIR = DB_DIR
 JOBS_UPLOAD_DIR = os.path.join(DATA_ROOT, 'jobs')

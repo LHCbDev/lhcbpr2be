@@ -9,6 +9,7 @@ from lhcbpr_api.models import (Application, ApplicationVersion,
 from rest_framework import viewsets
 from rest_framework import generics
 from rest_framework import mixins
+from rest_framework import filters
 
 from rest_framework.response import Response
 from serializers import *
@@ -38,6 +39,14 @@ class ApplicationVersionViewSet(viewsets.ModelViewSet):
 class OptionViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = Option.objects.all()
     serializer_class = OptionSerializer
+    filter_backends = (filters.DjangoFilterBackend,)
+
+    def get_queryset(self):
+        description = self.request.query_params.get("description", None)
+        if description:
+            return Option.objects.filter(description=description)
+        return self.queryset
+
 
 
 class AttributeGroupViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
@@ -63,6 +72,12 @@ class AttributeThresholdViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
 class SetupProjectViewSet(viewsets.ModelViewSet):
     queryset = SetupProject.objects.all()
     serializer_class = SetupProjectSerializer
+
+    def get_queryset(self):
+        description = self.request.query_params.get("description", None)
+        if description:
+            return SetupProject.objects.filter(description=description)
+        return self.queryset
 
 
 class JobDescriptionViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
