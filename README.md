@@ -20,11 +20,11 @@ source venv/bin/activate
 ```
 
 
-# Configuration
+## Configuration
 
 `./scripts/runserver <YOURENV> ` if it exists the file ./envs/YOURENV.env then the configuration is loaded from this file.
 
-## Default configuration
+** Default configuration **
 
 ```DJANGO_SECRET_KEY=PutYourKey
 DJANGO_STATIC_URL=/api/static/
@@ -45,4 +45,9 @@ DATA_ROOT=data
 * `DB_*`` parameters corresponds to the standart DJANGO database configuraiton
 * `DATA_ROOT` points to the folder with jobs output files.
 
+
+## Import zip files
+Zip files contains [handlers' results](https://gitlab.cern.ch/lhcb-core/LHCbPR2HD). You can import them by using the followinf command:
+
+`./site/manage.py lhcbpr_import /path/to/directory/with/zips`
 
