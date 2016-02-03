@@ -6,44 +6,43 @@
 1. `git clone ssh://git@gitlab.cern.ch:7999/lhcb-core/LHCbPR2BE`
 1. `cd LHCbPR2BE`
 1. `cp site/settings/private.default.py site/settings/private.py`
-1. Configure  private.py (set db connection,...)
-1. Set settings module in site/manage.py
-1. Update settings module (set static url)
 1. Setup and activate virtual environment (see below)
-1. Run server: `python site/manage.py runserver`  (at local server)
+1. Run dev server: `./scripts/runserver`  (at local server)
 
 ### Virtual environment
 
-Site is tested only with python2, so you need to setup only python virtual anvironment
+Site is tested only with python2, so you need to setup only python virtual environment 
 
 
 ```sh
-virtualenv venv # at local server
-virtualenv -p /afs/cern.ch/sw/lcg/external/Python/2.7.3/x86_64-slc5-gcc47-opt/bin/python venv # at lxplus
+virtualenv venv # at LHCbPR2BE folder. Use -p option if you need to select python executable
 source venv/bin/activate
-pip install -r requirements.txt
 ```
-
-At lxplus don't forget to change python path at fcgi/lhcb-api.fcgi
-
-At the developer's servers you can populate the database by executing the following commands:
-
-1. `python site/manage.py migrate`
-1. `python manage.py populate` (optional, fill empty database with test data)
-
-### Docker
-
-TODO
 
 
 # Configuration
 
-- DJANGO_LOG_LEVEL: default `INFO`
-- DJANGO_DB_DEFAULT_ENGINE: default `django.db.backends.mysql`,
-- DJANGO_DB_DEFAULT_NAME: default ''
-- DJANGO_DB_DEFAULT_USER: default ''
-- DJANGO_DB_DEFAULT_PASSWORD: default ''
-- DJANGO_DB_DEFAULT_HOST': default '127.0.0.1'
-- DJANGO_DB_DEFAULT_PORT': default '3306'
-- DJANGO_STATIC_URL: default '/static'
-- DJANGO_SECRET_KEY: default 'secret'
+`./scripts/runserver <YOURENV> ` if it exists the file ./envs/YOURENV.env then the configuration is loaded from this file.
+
+## Default configuration
+
+```DJANGO_SECRET_KEY=PutYourKey
+DJANGO_STATIC_URL=/api/static/
+
+DJANGO_HTTP_PORT=8080
+DJANGO_LOG_LEVEL=INFO
+
+DB_ENGINE=django.db.backends.sqlite3
+DB_HOST=
+DB_USER=
+DB_PASSWORD=
+DB_DATABASE=lhcbprdev
+DB_PORT=
+
+DATA_ROOT=data
+```
+
+* `DB_*`` parameters corresponds to the standart DJANGO database configuraiton
+* `DATA_ROOT` points to the folder with jobs output files.
+
+

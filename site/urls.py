@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.conf.urls import url, include
 from django.conf.urls.static import static
+from django.views.generic.base import RedirectView
 # =============================================================================
 from rest_framework.routers import DefaultRouter
 from rest_framework_extensions.routers import ExtendedDefaultRouter
@@ -89,11 +90,12 @@ router_jd.register(r'options', views.OptionViewSet, base_name="jobdescription-op
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.
 urlpatterns = [
-    url(r'^', include(router.urls)),
-    url(r'^', include(default_router.urls)),
+    url(r'^api/', include(router.urls)),
+    url(r'^api/', include(default_router.urls)),
 
     url(r'^api-auth/',
-        include('rest_framework.urls', namespace='rest_framework'))
+        include('rest_framework.urls', namespace='rest_framework')),
+    url(r'^$', RedirectView.as_view(url='/api', permanent=True)),
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
