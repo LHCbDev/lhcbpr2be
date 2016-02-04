@@ -56,10 +56,12 @@ target/
 # Sqllite
 *.sqlite3
 static/
-migrations/
 
 # Private
 private*
 data/jobs
 envs/*
 !envs/default.env
+
+#sqllite db
+*.db
