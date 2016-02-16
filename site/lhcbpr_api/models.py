@@ -56,6 +56,16 @@ class ApplicationVersion(models.Model):
     def __unicode__(self):
         return '{0} {1}'.format(self.application.name, self.version)
 
+    def save(self, *args, **kwargs):
+        # Call the "real" save() method.
+
+        self.is_nightly = ApplicationVersion.is_it_nightly(self.version)
+        if self.is_nightly:
+            slotname, number, _ = ApplicationVersion.get_slot_and_number(self.version)
+            self.slot, created = Slot.objects.get_or_create(name=slotname)
+
+        super(ApplicationVersion, self).save(*args, **kwargs)
+
     @staticmethod
     def is_it_nightly(version):
         return version and (version[0] != 'v')

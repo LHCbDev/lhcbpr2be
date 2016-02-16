@@ -355,6 +355,11 @@ class SearchJobsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
             ids = platforms.split(',')
             queryset = queryset.filter(platform__id__in=ids)
 
+        job_ids = self.request.query_params.get("ids", None)
+        if job_ids:
+            ids = job_ids.split(',')
+            queryset = queryset.filter(id__in=ids)
+
         return queryset.order_by('-time_end')
         # serializer = JobListSerializer(queryset, many=True, read_only=True, context={'request': request})
         # return Response(serializer.data)
