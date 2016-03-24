@@ -139,6 +139,23 @@ class HostViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
 class ActiveApplicationViewSet(viewsets.ViewSet):
 
     def list(self, request):
+        """
+        List the number of available job results grouped by application name.
+        ---
+        type:
+          count:
+            description: Number of jobs results
+            required: true
+            type: int
+          id:
+            description: Application id
+            required: true
+            type: int
+          name:
+            description: Application name
+            required: true
+            type: string
+        """
         id_field = 'job_description__application_version__application__id'
         name_field = 'job_description__application_version__application__name'
         queryset = (
@@ -166,6 +183,23 @@ class ActiveApplicationViewSet(viewsets.ViewSet):
 
     @list_route()
     def platforms(self, request, pk):
+        """
+        List the number of available job results grouped by platform.
+        ---
+        type:
+          count:
+            description: Number of jobs results
+            required: true
+            type: int
+          id:
+            description: Platform id
+            required: true
+            type: int
+          name:
+            description: Platform name
+            required: true
+            type: string
+        """
         result = []
         id_field = 'platform__id'
         name_field = 'platform__cmtconfig'
@@ -192,6 +226,29 @@ class ActiveApplicationViewSet(viewsets.ViewSet):
 
     @list_route()
     def versions(self, request, pk):
+        """
+        List the number of available job results grouped by applications' versions.
+        ---
+        type:
+          values:
+              count:
+                description: Number of jobs results
+                required: true
+                type: int
+              id:
+                description: Version id
+                required: true
+                type: int
+              name:
+                description: Version name
+                required: true
+                type: string
+          name:
+              description: Application name
+              required: true
+              type: string
+
+        """
         id_field = 'job_description__application_version__id'
         name_field = 'job_description__application_version__version'
         time_field = 'job_description__application_version__vtime'
@@ -271,6 +328,9 @@ class ActiveApplicationViewSet(viewsets.ViewSet):
 
     @list_route()
     def slots(self, request, pk):
+        """
+        List the number of available job results grouped by slot.
+        """
         id_field = 'job_description__application_version__slot__id'
         name_field = 'job_description__application_version__slot__name'
         queryset = (
@@ -292,6 +352,9 @@ class ActiveApplicationViewSet(viewsets.ViewSet):
 
     @list_route()
     def options(self, request, pk):
+        """
+        List the number of available job results for the selected application grouped by options.
+        """
         id_field = 'job_description__option__id'
         name_field = 'job_description__option__description'
 
@@ -324,6 +387,30 @@ class ActiveApplicationViewSet(viewsets.ViewSet):
 
 class SearchJobsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     serializer_class = JobSerializer
+
+    def list(self,request):
+        """
+        Search job results.
+        We can search by: application, options, platforms, ids 
+        ---
+        parameters:
+            - name: application
+              description: Comma-separated list of applications' ids 
+              paramType: query
+            - name: attrs
+              description: Comma-separated list of application versions' ids 
+              paramType: query
+            - name: options
+              description: Comma-separated list of options'  ids 
+              paramType: query
+            - name: platforms
+              description: Comma-separated list of platform'  ids 
+              paramType: query
+            - name: ids
+              description: Comma-separated list of job result's ids 
+              paramType: query
+        """
+        return super(SearchJobsViewSet, self).list(request)
 
     def get_queryset(self):
         id_field = 'job_description__application_version__application__id'
@@ -424,7 +511,26 @@ class SearchJobsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
 
 
 class CompareJobsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
+
     serializer_class = AttributesWithJobResultsSerializer
+
+    def list(self,request):
+        """
+        Compare attributes' values for selected jobs. 
+        Attributes can be filtered by id or by name.
+        ---
+        parameters:
+            - name: ids
+              description: Comma-separated list of jobs' ids for comparison 
+              paramType: query
+            - name: attrs
+              description: Comma-separated list of attributes' ids (integers) 
+              paramType: query
+            - name: contains
+              description: Search attribute by name that contains this substring 
+              paramType: query
+        """
+        return super(CompareJobsViewSet, self).list(request)
 
     def get_queryset(self):
         context = self.get_serializer_context()

@@ -3,4 +3,4 @@
 echo "Bootstrap..."
 ./scripts/bootstrap
 
-ENV=default ./site/manage.py runserver
+./site/manage.py runserver
