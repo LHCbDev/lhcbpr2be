@@ -1,3 +1,6 @@
-#!/bin/sh
-	
+#!/usr/bin/env bash
+if [ "$DJANGO_RUN_MIGRATE" = "yes" ]
+then
+  ./scripts/fixture
+fi	
 python ./site/manage.py runserver
