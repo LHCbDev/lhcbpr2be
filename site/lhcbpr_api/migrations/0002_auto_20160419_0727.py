@@ -93,8 +93,8 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='jobdescription',
-            name='execulatble',
-            field=models.ForeignKey(db_index=False, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='jobdescriptions', to='lhcbpr_api.Executable'),
+            name='executable',
+            field=models.ForeignKey(db_index=False, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='job_descriptions', to='lhcbpr_api.Executable'),
         ),
         migrations.AddField(
             model_name='option',

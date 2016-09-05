@@ -39,7 +39,6 @@
 },
 {
     "fields": {
-        "executable": 1,
         "content": "$BRUNELROOT/options/Brunel-Default.py $BRUNELROOT/options/COLLISION12-Beam4000GeV-VeloClosed-MagDown.py --option=\"from Configurables import Brunel; Brunel().EvtMax=10\"",
         "description": "10Evts-COLLISION12-Beam4000GeV-VeloClosed-MagDown"
     },
@@ -49,7 +48,6 @@
 {
     "fields": {
         "content": "hadronic_tests",
-        "executable": 2,
         "description": "GEANT_RUNHADRONIC"
     },
     "model": "lhcbpr_api.option",
@@ -58,7 +56,6 @@
 {
     "fields": {
         "content": "Calorimeter_test",
-        "executable": 2,
         "description": "GEANT_TESTEM3"
     },
     "model": "lhcbpr_api.option",
@@ -67,7 +64,6 @@
 {
     "fields": {
         "content": "MultipleScattering_test",
-        "executable": 2,
         "description": "GEANT_TESTEM5"
     },
     "model": "lhcbpr_api.option",
@@ -106,7 +102,8 @@
     "fields": {
         "setup_project": 1,
         "application_version": 1,
-        "option": 1
+        "option": 1,
+        "executable": 1
     },
     "model": "lhcbpr_api.jobdescription",
     "pk": 1080

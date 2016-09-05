@@ -113,8 +113,6 @@ class Executable(models.Model):
 class Option(models.Model):
     content = models.CharField(max_length=2000)
     description = models.CharField(max_length=2000)
-    executable = models.ForeignKey(
-        Executable, null=True, related_name='options', db_index=False)
 
     def __unicode__(self):
         return self.description
@@ -131,8 +129,8 @@ class SetupProject(models.Model):
 class JobDescription(models.Model):
     application_version = models.ForeignKey(
         ApplicationVersion, related_name='job_descriptions')
-    execulatble = models.ForeignKey(
-        Executable, null=True, related_name='jobdescriptions', db_index=False)
+    executable = models.ForeignKey(
+        Executable, related_name='job_descriptions')
     option = models.ForeignKey(
         Option, null=True, related_name='job_descriptions')
     setup_project = models.ForeignKey(
@@ -143,7 +141,8 @@ class JobDescription(models.Model):
             self.id,
             self.application_version.version,
             self.application_version.application.name,
-            self.option.description
+            self.option.description,
+            self.executable.name
         )
 
 

@@ -1,7 +1,6 @@
 # test
 from django.core.management.base import BaseCommand
 from django.conf import settings
-from django.utils.dateparse import parse_datetime
 
 from lhcbpr_api.models import (
     AddedResult, Application, ApplicationVersion, Option, SetupProject,
@@ -10,7 +9,6 @@ from lhcbpr_api.models import (
 )
 
 from dateutil import parser
-import pytz
 from glob import glob
 import zipfile
 import json
@@ -50,18 +48,14 @@ class Command(BaseCommand):
         else:
             executable = None
 
-
-
         option = Option.objects.filter(description=data['opt_name'])
         if option:
             option = option[0]
         else:
             option = Option.objects.create(
                 description=data['opt_name'],
-                content=data['opt_content'],
-                executable=executable
+                content=data['opt_content']
             )
-        
 
         if data['setup_name']:
             setup = SetupProject.objects.filter(description=data['setup_name'])
@@ -78,7 +72,8 @@ class Command(BaseCommand):
         jd, created = JobDescription.objects.get_or_create(
             application_version=ver,
             option=option,
-            setup_project=setup
+            setup_project=setup,
+            executable=executable
         )
 
         if created:

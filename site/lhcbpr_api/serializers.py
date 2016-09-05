@@ -8,7 +8,6 @@ from rest_framework import serializers
 from rest_framework_extensions.fields import ResourceUriField
 
 
-
 class AttributeNoThresholdsSerializer(serializers.HyperlinkedModelSerializer):
     resource_uri = ResourceUriField(
         view_name='attribute-detail', read_only=True)
@@ -25,6 +24,7 @@ class AttributeThresholdSerializer(serializers.HyperlinkedModelSerializer):
         model = AttributeThreshold
         fields = ('attribute', 'option', 'up_value', 'down_value', 'start')
 
+
 class ExecutableSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
@@ -32,15 +32,14 @@ class ExecutableSerializer(serializers.HyperlinkedModelSerializer):
         fields = (
             'id', 'name', 'content')
 
+
 class OptionSerializer(serializers.HyperlinkedModelSerializer):
-    executable = ExecutableSerializer(many=False, read_only=True)
-    executable_id = serializers.PrimaryKeyRelatedField(queryset=Executable.objects.all())
     thresholds = AttributeThresholdSerializer(many=True, read_only=True)
 
     class Meta:
         model = Option
         fields = (
-            'id', 'content', 'description', 'executable_id','executable', 'thresholds')
+            'id', 'content', 'description', 'thresholds')
 
 
 class SetupProjectSerializer(serializers.HyperlinkedModelSerializer):
@@ -62,18 +61,22 @@ class ApplicationNoVerSerializer(serializers.HyperlinkedModelSerializer):
 class JobDescriptionNoVersionSerializer(serializers.HyperlinkedModelSerializer):
     option = OptionSerializer(many=False)
     setup_project = SetupProjectSerializer(many=False)
+    executable = ExecutableSerializer(many=False)
 
     class Meta:
         model = JobDescription
-        fields = ('setup_project', 'option')
+        fields = ('setup_project', 'option', 'executable')
+
 
 class ApplicationVersionSerializer(serializers.HyperlinkedModelSerializer):
-    job_descriptions = JobDescriptionNoVersionSerializer(many=True, read_only=True)
+    job_descriptions = JobDescriptionNoVersionSerializer(
+        many=True, read_only=True)
     application = ApplicationNoVerSerializer(many=False, read_only=True)
 
     class Meta:
         model = ApplicationVersion
-        fields = ('id', 'application', 'version', 'is_nightly', 'job_descriptions')
+        fields = (
+            'id', 'application', 'version', 'is_nightly', 'job_descriptions')
 
 
 class JobDescriptionSerializer(serializers.HyperlinkedModelSerializer):
@@ -103,33 +106,41 @@ class AttributeSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('id', 'name', 'dtype', 'description', 'thresholds')
 
 
-
 class AttributesWithJobResultsSerializer(serializers.HyperlinkedModelSerializer):
     thresholds = AttributeThresholdSerializer(many=True, read_only=True)
     jobvalues = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Attribute
-        fields = ('id', 'name', 'dtype', 'description', 'thresholds', 'jobvalues')
+        fields = (
+            'id', 'name', 'dtype', 'description', 'thresholds', 'jobvalues')
 
     def get_jobvalues(self, obj):
-        jobresults = JobResult.objects.filter(job__id__in=self.context["ids"], attr=obj)
-        serializer = JobResultOnlyValueSerializer(jobresults, many=True, read_only=True, context=self.context)
+        jobresults = JobResult.objects.filter(
+            job__id__in=self.context["ids"], attr=obj)
+        serializer = JobResultOnlyValueSerializer(
+            jobresults, many=True, read_only=True, context=self.context)
         return serializer.data
 
 
 class AttributeGroupListSerializer(serializers.HyperlinkedModelSerializer):
-    resource_uri = ResourceUriField(view_name='attributegroup-detail', read_only=True)
+    resource_uri = ResourceUriField(
+        view_name='attributegroup-detail', read_only=True)
+
     class Meta:
         model = AttributeGroup
         fields = ('id', 'resource_uri', 'name')
 
+
 class AttributeGroupRetrieveSerializer(serializers.HyperlinkedModelSerializer):
-    resource_uri = ResourceUriField(view_name='attributegroup-detail', read_only=True)
+    resource_uri = ResourceUriField(
+        view_name='attributegroup-detail', read_only=True)
     attributes = AttributeSerializer(many=True, read_only=True)
+
     class Meta:
         model = AttributeGroup
         fields = ('id', 'resource_uri', 'name', 'attributes')
+
 
 class HandlerSerializer(serializers.HyperlinkedModelSerializer):
 
@@ -159,10 +170,8 @@ class AddedResultSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('identifier',)
 
 
-
-
 class HostSerializer(serializers.HyperlinkedModelSerializer):
-    #host = HostSerializer(many=False)
+
 
     class Meta:
         model = Host
@@ -175,22 +184,28 @@ class PlatformSerializer(serializers.HyperlinkedModelSerializer):
         model = Platform
         fields = ('content',)
 
+
 class JobResultNoJobSerializer(serializers.HyperlinkedModelSerializer):
     attr = AttributeSerializer(many=False, read_only=True)
     value = serializers.CharField(source="get_value")
+
     class Meta:
         model = JobResult
         fields = ('attr', 'value')
+
 
 class JobResultValueSerializer(serializers.HyperlinkedModelSerializer):
     attr = AttributeSerializer(many=False, read_only=True)
     value = serializers.CharField(source="get_value")
+
     class Meta:
         model = JobResult
         fields = ('attr', 'value')
 
+
 class JobIdSerializer(serializers.HyperlinkedModelSerializer):
     resource_uri = ResourceUriField(view_name='job-detail', read_only=True)
+
     class Meta:
         model = Job
         fields = ('id', 'resource_uri')
@@ -199,9 +214,11 @@ class JobIdSerializer(serializers.HyperlinkedModelSerializer):
 class JobResultOnlyValueSerializer(serializers.HyperlinkedModelSerializer):
     value = serializers.CharField(source="get_value")
     job = JobIdSerializer()
+
     class Meta:
         model = JobResult
         fields = ('job', 'value')
+
 
 class JobSerializer(serializers.HyperlinkedModelSerializer):
     job_description = JobDescriptionSerializer(many=False, read_only=True)
@@ -209,38 +226,45 @@ class JobSerializer(serializers.HyperlinkedModelSerializer):
     platform = PlatformSerializer(many=False, read_only=True)
     resource_uri = ResourceUriField(view_name='job-detail', read_only=True)
     #results = JobResultNoJobSerializer(many=True, read_only=True)
+
     class Meta:
         model = Job
         fields = ('id', 'resource_uri', 'job_description', 'host', 'platform',
                   'time_start', 'time_end', 'status', 'is_success')
 
+
 class JobIdSerializer(serializers.HyperlinkedModelSerializer):
     resource_uri = ResourceUriField(view_name='job-detail', read_only=True)
     #results = JobResultNoJobSerializer(many=True, read_only=True)
+
     class Meta:
         model = Job
         fields = ('id', 'resource_uri')
 
+
 class JobResultNoJobSerializer(serializers.HyperlinkedModelSerializer):
     attr = AttributeSerializer(many=False, read_only=True)
     value = serializers.CharField(source="get_value")
+
     class Meta:
         model = JobResult
         fields = ('attr', 'value')
+
 
 class JobResultSerializer(serializers.HyperlinkedModelSerializer):
     attr = AttributeSerializer(many=False, read_only=True)
     job = JobSerializer(many=False, read_only=True)
     value = serializers.CharField(source="get_value")
+
     class Meta:
         model = JobResult
-        fields = ('attr', 'value','job', )
+        fields = ('attr', 'value', 'job', )
 
 
 class ActiveItemSerializer(serializers.Serializer):
-    id=serializers.IntegerField()
-    name=serializers.CharField(max_length=200)
-    count=serializers.IntegerField()
+    id = serializers.IntegerField()
+    name = serializers.CharField(max_length=200)
+    count = serializers.IntegerField()
 
 # class TrendValueSerializer(serializers.Serializer):
 #     version = serializers.CharField(max_length = 200)

@@ -40,6 +40,13 @@ class ExecutableViewSet(viewsets.ModelViewSet):
     queryset = Executable.objects.all()
     serializer_class = ExecutableSerializer
 
+    def get_queryset(self):
+        name = self.request.query_params.get("name", None)
+        if name:
+            return Executable.objects.filter(name=name)
+        return self.queryset
+
+
 class OptionViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = Option.objects.all()
     serializer_class = OptionSerializer
@@ -50,7 +57,6 @@ class OptionViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
         if description:
             return Option.objects.filter(description=description)
         return self.queryset
-
 
 
 class AttributeGroupViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
@@ -286,7 +292,8 @@ class ActiveApplicationViewSet(viewsets.ViewSet):
             nightlyVersionNumber = 1
             if 'nightlyVersionNumber' in request.query_params:
                 try:
-                    nightlyVersionNumber = int(request.query_params['nightlyVersionNumber'])
+                    nightlyVersionNumber = int(
+                        request.query_params['nightlyVersionNumber'])
                 except ValueError:
                     nightlyVersionNumber = 1
 
@@ -308,7 +315,8 @@ class ActiveApplicationViewSet(viewsets.ViewSet):
                     .select_related()
                     .values(id_field, name_field, time_field)
                     .filter(
-                        job_description__application_version__slot__id=slot[slot_id_field],
+                        job_description__application_version__slot__id=slot[
+                            slot_id_field],
                         job_description__application_version__application__id=pk
                     )
                     .annotate(njobs=Count(id_field))
@@ -388,11 +396,47 @@ class ActiveApplicationViewSet(viewsets.ViewSet):
 
         return Response(result)
 
+    @list_route()
+    def executables(self, request, pk):
+        """
+        List the number of available job results for the selected application
+        grouped by executables.
+        """
+        id_field = 'job_description__executable__id'
+        name_field = 'job_description__executable__name'
+
+        versions = []
+        if 'versions' in request.query_params and request.query_params['versions']:
+            versions = [
+                int(v) for v in request.query_params['versions'].split(',')
+            ]
+
+        queryset = (Job.objects.select_related().values(id_field, name_field)
+                    .filter(
+                        job_description__application_version__application__id=pk
+        ))
+
+        if versions:
+            queryset = queryset.filter(
+                job_description__application_version__id__in=versions)
+        queryset = queryset.annotate(njobs=Count(id_field))
+
+        result = []
+        for option in queryset:
+            result.append(
+                {"id": option[id_field],
+                 "name": option[name_field],
+                 "count": option["njobs"]
+                 }
+            )
+
+        return Response(result)
+
 
 class SearchJobsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     serializer_class = JobSerializer
 
-    def list(self,request):
+    def list(self, request):
         """
         Search job results.
         We can search by: application, options, platforms, ids 
@@ -417,8 +461,8 @@ class SearchJobsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
         return super(SearchJobsViewSet, self).list(request)
 
     def get_queryset(self):
-        id_field = 'job_description__application_version__application__id'
-        name_field = 'job_description__application_version__application__name'
+        # id_field = 'job_description__application_version__application__id'
+        # name_field = 'job_description__application_version__application__name'
         queryset = (
             Job.objects
             .select_related()
@@ -440,6 +484,11 @@ class SearchJobsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
         if options:
             ids = options.split(',')
             queryset = queryset.filter(job_description__option__id__in=ids)
+
+        executables = self.request.query_params.get("executables", None)
+        if executables:
+            ids = executables.split(',')
+            queryset = queryset.filter(job_description__executable__id__in=ids)
 
         platforms = self.request.query_params.get("platforms", None)
         if platforms:
@@ -518,7 +567,7 @@ class CompareJobsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
 
     serializer_class = AttributesWithJobResultsSerializer
 
-    def list(self,request):
+    def list(self, request):
         """
         Compare attributes' values for selected jobs. 
         Attributes can be filtered by id or by name.
@@ -547,11 +596,14 @@ class CompareJobsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
         return results.order_by('name').distinct()
 
     def get_serializer_context(self):
-        result = {"ids": [], "attrs": [], "request": self.request, "contains": None}
+        result = {"ids": [], "attrs": [],
+                  "request": self.request, "contains": None}
         if 'ids' in self.request.query_params:
-            result["ids"] = [int(id) for id in self.request.query_params['ids'].split(',')]
+            result["ids"] = [
+                int(id) for id in self.request.query_params['ids'].split(',')]
         if 'attrs' in self.request.query_params:
-            result["attrs"] = [int(id) for id in self.request.query_params['attrs'].split(',')]
+            result["attrs"] = [
+                int(id) for id in self.request.query_params['attrs'].split(',')]
 
         if 'contains' in self.request.query_params:
             result['contains'] = self.request.query_params['contains']
@@ -575,8 +627,10 @@ class TrendsViewSet(viewsets.ViewSet):
         logger.info('Looping over {0} results'.format(len(results)))
         for result_index in range(len(results)):
             for version_index in range(0, len(results[result_index]['values'])):
-                current_version = results[result_index]['values'][version_index]['version']
-                numbers = results[result_index]['values'][version_index]['results']
+                current_version = results[result_index][
+                    'values'][version_index]['version']
+                numbers = results[result_index][
+                    'values'][version_index]['results']
                 count = float(len(numbers))
                 average = sum(numbers) / count
                 deviation = 0
@@ -607,13 +661,17 @@ class TrendsViewSet(viewsets.ViewSet):
             "page_size": 10
         }
         if 'app' in request.query_params and request.query_params['app'].strip() != '':
-            result["app"] = [int(id) for id in request.query_params['app'].split(',')]
+            result["app"] = [int(id)
+                             for id in request.query_params['app'].split(',')]
         if 'options' in request.query_params and request.query_params['options'].strip() != '':
-            result["options"] = [int(id) for id in request.query_params['options'].split(',')]
+            result["options"] = [
+                int(id) for id in request.query_params['options'].split(',')]
         if 'versions' in request.query_params and request.query_params['versions'].strip() != '':
-            result["versions"] = [int(id) for id in request.query_params['versions'].split(',')]
+            result["versions"] = [
+                int(id) for id in request.query_params['versions'].split(',')]
         if 'platforms' in request.query_params and request.query_params['platforms'].strip() != '':
-            result["platforms"] = [int(id) for id in request.query_params['platforms'].split(',')]
+            result["platforms"] = [
+                int(id) for id in request.query_params['platforms'].split(',')]
         if 'attr_filter' in request.query_params and request.query_params['attr_filter'].strip() != '':
             result['attr_filter'] = request.query_params['attr_filter']
         if 'page' in request.query_params and request.query_params['page'].strip() != '':
@@ -639,12 +697,14 @@ class HistogramsViewSet(viewsets.ViewSet):
             # Remove values less than context_min or greater than context_max
             for result_index in range(0, len(results)):
                 for version_index in range(0, len(results[result_index]['values'])):
-                    numbers = results[result_index]['values'][version_index]['results']
+                    numbers = results[result_index][
+                        'values'][version_index]['results']
                     if context_min:
                         numbers = [i for i in numbers if i >= context_min]
                     if context_max:
                         numbers = [i for i in numbers if i <= context_max]
-                    results[result_index]['values'][version_index]['results'] = numbers
+                    results[result_index]['values'][
+                        version_index]['results'] = numbers
             # Compute min, max values and the interval width for each attribute
             for result_index in range(0, len(results)):
                 min_value = 9999999
@@ -653,7 +713,8 @@ class HistogramsViewSet(viewsets.ViewSet):
                 #     min_value = results[result_index]['values'][0]['results'][0]
                 #     max_value = min_value
                 for version_index in range(0, len(results[result_index]['values'])):
-                    numbers = results[result_index]['values'][version_index]['results']
+                    numbers = results[result_index][
+                        'values'][version_index]['results']
                     if len(numbers) > 0:
                         temp = min(numbers)
                         if temp < min_value:
@@ -671,8 +732,10 @@ class HistogramsViewSet(viewsets.ViewSet):
                 min_value = results[result_index]['min_value']
                 if interval_width > 0:
                     for version_index in range(0, len(results[result_index]['values'])):
-                        current_version = results[result_index]['values'][version_index]['version']
-                        numbers = results[result_index]['values'][version_index]['results']
+                        current_version = results[result_index][
+                            'values'][version_index]['version']
+                        numbers = results[result_index][
+                            'values'][version_index]['results']
                         jobs = [0 for i in range(0, int(context_intervals))]
                         for n in numbers:
                             job_index = n - min_value
@@ -685,7 +748,8 @@ class HistogramsViewSet(viewsets.ViewSet):
                         }
                 else:
                     for version_index in range(0, len(results[result_index]['values'])):
-                        current_version = results[result_index]['values'][version_index]['version']
+                        current_version = results[result_index][
+                            'values'][version_index]['version']
                         jobs = [0 for i in range(0, int(context_intervals))]
                         results[result_index]['values'][version_index] = {
                             'version': current_version,
@@ -710,11 +774,14 @@ class HistogramsViewSet(viewsets.ViewSet):
             'page_size': 10
         }
         if 'app' in request.query_params:
-            result['app'] = [int(id) for id in request.query_params['app'].split(',')]
+            result['app'] = [int(id)
+                             for id in request.query_params['app'].split(',')]
         if 'options' in request.query_params and request.query_params['options'] != '':
-            result['options'] = [int(id) for id in request.query_params['options'].split(',')]
+            result['options'] = [
+                int(id) for id in request.query_params['options'].split(',')]
         if 'versions' in request.query_params and request.query_params['versions'] != '':
-            result['versions'] = [int(id) for id in request.query_params['versions'].split(',')]
+            result['versions'] = [
+                int(id) for id in request.query_params['versions'].split(',')]
         if 'min' in request.query_params:
             result['min'] = float(request.query_params['min'])
         if 'max' in request.query_params:
