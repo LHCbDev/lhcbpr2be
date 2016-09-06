@@ -172,7 +172,6 @@ class AddedResultSerializer(serializers.HyperlinkedModelSerializer):
 
 class HostSerializer(serializers.HyperlinkedModelSerializer):
 
-
     class Meta:
         model = Host
         fields = ('id', 'hostname', 'cpu_info', 'memory_info')
@@ -211,15 +210,6 @@ class JobIdSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('id', 'resource_uri')
 
 
-class JobResultOnlyValueSerializer(serializers.HyperlinkedModelSerializer):
-    value = serializers.CharField(source="get_value")
-    job = JobIdSerializer()
-
-    class Meta:
-        model = JobResult
-        fields = ('job', 'value')
-
-
 class JobSerializer(serializers.HyperlinkedModelSerializer):
     job_description = JobDescriptionSerializer(many=False, read_only=True)
     host = HostSerializer(many=False, read_only=True)
@@ -231,6 +221,15 @@ class JobSerializer(serializers.HyperlinkedModelSerializer):
         model = Job
         fields = ('id', 'resource_uri', 'job_description', 'host', 'platform',
                   'time_start', 'time_end', 'status', 'is_success')
+
+
+class JobResultOnlyValueSerializer(serializers.HyperlinkedModelSerializer):
+    value = serializers.CharField(source="get_value")
+    job = JobSerializer()
+
+    class Meta:
+        model = JobResult
+        fields = ('job', 'value')
 
 
 class JobIdSerializer(serializers.HyperlinkedModelSerializer):
