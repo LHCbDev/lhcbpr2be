@@ -26,6 +26,11 @@ class Host(models.Model):
 class Application(models.Model):
     name = models.CharField(max_length=50, unique=True)
 
+    # Name is always upper case
+    def save(self, force_insert=False, force_update=False):
+        self.name = self.name.upper()
+        super(Application, self).save(force_insert, force_update)
+
     def __unicode__(self):
         return '{0}'.format(self.name)
 
