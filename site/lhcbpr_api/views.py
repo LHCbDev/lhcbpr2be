@@ -43,7 +43,7 @@ class ExecutableViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         name = self.request.query_params.get("name", None)
         if name:
-            return Executable.objects.filter(name=name)
+            return Executable.objects.filter(name_iexact=name)
         return self.queryset
 
 
@@ -55,7 +55,7 @@ class OptionViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     def get_queryset(self):
         description = self.request.query_params.get("description", None)
         if description:
-            return Option.objects.filter(description=description)
+            return Option.objects.filter(description__iexact=description)
         return self.queryset
 
 
@@ -86,7 +86,7 @@ class SetupProjectViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         description = self.request.query_params.get("description", None)
         if description:
-            return SetupProject.objects.filter(description=description)
+            return SetupProject.objects.filter(description_iexact=description)
         return self.queryset
 
 
