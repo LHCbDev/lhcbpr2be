@@ -1,6 +1,5 @@
 # LHCbPR service
 
-
 ## Installation
 
 1. `git clone ssh://git@gitlab.cern.ch:7999/lhcb-core/LHCbPR2BE`
@@ -50,4 +49,15 @@ DATA_ROOT=data
 Zip files contains [handlers' results](https://gitlab.cern.ch/lhcb-core/LHCbPR2HD). You can import them by using the followinf command:
 
 `./site/manage.py lhcbpr_import /path/to/directory/with/zips`
+
+## Administration site
+
+You can update base records at the administration area. By default the path is
+`/api/admin`. There you can add applications, options and custumize executables.
+
+For test purposes the default username is "lhcbpr" and password is "backend".
+
+
+
+
 
