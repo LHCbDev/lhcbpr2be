@@ -19,6 +19,8 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Count
 from rest_framework.decorators import detail_route, list_route
 
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+
 from operator import itemgetter
 from lhcbpr_api.services import *
 
@@ -121,6 +123,7 @@ class JobResultNoJobViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
 
 
 class JobResultByOptionAndAttribute(viewsets.ViewSet):
+    permission_classes = (IsAuthenticatedOrReadOnly,)
     queryset = JobResult.objects.all()
 
     def list(self, request, option, attr):
@@ -147,6 +150,7 @@ class HostViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
 
 
 class ActiveApplicationViewSet(viewsets.ViewSet):
+    permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def list(self, request):
         """
@@ -612,7 +616,7 @@ class CompareJobsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
 
 
 class TrendsViewSet(viewsets.ViewSet):
-
+    permission_classes = (IsAuthenticatedOrReadOnly,)
     def list(self, request):
         logger.info('Trends started')
         context = self.get_serializer_context(request)
@@ -682,7 +686,7 @@ class TrendsViewSet(viewsets.ViewSet):
 
 
 class HistogramsViewSet(viewsets.ViewSet):
-
+    permission_classes = (IsAuthenticatedOrReadOnly,)
     def list(self, request):
         context = self.get_serializer_context(request)
         service = JobResultsService()
