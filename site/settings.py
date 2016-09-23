@@ -62,6 +62,7 @@ MIDDLEWARE_CLASSES = (
 )
 # =============================================================================
 AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
     'shibsso.backends.ShibSSOBackend',
 )
 # =============================================================================
@@ -138,6 +139,12 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages']
+        }
+
     },
 ]
 

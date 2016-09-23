@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.conf.urls import url, include
 from django.conf.urls.static import static
+from django.contrib import admin
 from django.views.generic.base import RedirectView
 # =============================================================================
 from rest_framework.routers import DefaultRouter
@@ -9,6 +10,8 @@ from rest_framework_extensions.routers import ExtendedDefaultRouter
 import shibsso
 # =============================================================================
 from lhcbpr_api import views
+# =============================================================================
+#admin.autodiscover()
 # =============================================================================
 router = ExtendedDefaultRouter()
 default_router = DefaultRouter()
@@ -100,6 +103,7 @@ urlpatterns = [
     url(r'^api/docs/', include('rest_framework_swagger.urls')),
     url(r'^$', RedirectView.as_view(url='/api', permanent=True)),
     url(r'^api/login/$', shibsso.views.login),
-    url(r'^api/logout/$', shibsso.views.logout)
+    url(r'^api/logout/$', shibsso.views.logout),
+    url(r'^api/admin/', admin.site.urls),
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
