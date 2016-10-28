@@ -8,4 +8,6 @@ then
   dump="fixtures/dump10.json"
   echo "Load $dump"
   ./site/manage.py loaddata $dump
+  echo "Load zips"
+  ./site/manage.py lhcbpr_import fixtures/zips
 fi
