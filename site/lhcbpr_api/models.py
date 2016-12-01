@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 
 DATA_TYPE_CHOICES = (
     ('String', 'String'),
+    ('JSON', 'JSON'),
     ('Float', 'Float'),
     ('Integer', 'Integer'),
     ('DateTime', 'DateTime'),
@@ -286,6 +287,8 @@ class ResultInteger(JobResult):
 class ResultString(JobResult):
     data = models.TextField()
 
+class ResultJSON(JobResult):
+    data = models.TextField()
 
 class ResultFile(JobResult):
     data = models.FileField()

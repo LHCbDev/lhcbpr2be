@@ -29,7 +29,8 @@ class Command(BaseCommand):
         data = json.loads(unzipper.read('json_results'))
         print(json.dumps(data, indent=2, sort_keys=True))
 
-        app, _ = Application.objects.get_or_create(name=data['app_name'].upper())
+        app, _ = Application.objects.get_or_create(
+            name=data['app_name'].upper())
         ver, _ = ApplicationVersion.objects.get_or_create(
             application=app,
             vtime=data['app_version_datetime'],
@@ -130,7 +131,8 @@ class Command(BaseCommand):
 
             if attr.dtype != attr_source['type']:
                 logger.error(
-                    "Attribute {} already exists, but has type {}, not {}".format(
+                    "Attribute {} already exists, but has type {}" + 
+                    ", not {}".format(
                         attr.name,
                         attr.dtype,
                         attr_source['type']
