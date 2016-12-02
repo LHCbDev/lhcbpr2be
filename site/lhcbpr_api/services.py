@@ -76,9 +76,9 @@ class JobResultsService:
                 current_version_index = current_version_index + 1
             # Add the result to the current version
             if item['resultfloat']:
-                results[current_result_index]['values'][current_version_index]['results'].append(item['resultfloat'] / 1000.0)
+                results[current_result_index]['values'][current_version_index]['results'].append(item['resultfloat'])
             else:
-                results[current_result_index]['values'][current_version_index]['results'].append(item['resultinteger'] / 1000.0)
+                results[current_result_index]['values'][current_version_index]['results'].append(item['resultinteger'])
 
         startIndex = ( context['page'] - 1 ) * context['page_size']
         endIndex = context['page'] * context['page_size']

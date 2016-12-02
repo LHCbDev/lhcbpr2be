@@ -1,4 +1,5 @@
 import sys
+import q
 from lhcbpr_api.models import (Application, ApplicationVersion,
                                Option, Attribute, SetupProject,
                                JobDescription, AttributeGroup,
@@ -625,6 +626,7 @@ class TrendsViewSet(viewsets.ViewSet):
         logger.info('Retrieving results from service')
         service = JobResultsService()
         results = service.get_results_per_attr_per_version(context)
+        q(results)
         logger.info('results fetched !')
         total_count = service.get_attrs_count(context)
         logger.info('Counted !')

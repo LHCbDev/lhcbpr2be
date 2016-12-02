@@ -131,7 +131,7 @@ class Command(BaseCommand):
 
             if attr.dtype != attr_source['type']:
                 logger.error(
-                    "Attribute {} already exists, but has type {}" + 
+                    "Attribute {} already exists, but has type {}" +
                     ", not {}".format(
                         attr.name,
                         attr.dtype,
@@ -170,11 +170,15 @@ class Command(BaseCommand):
         return True
 
     def handle(self, *args, **options):
-        ext = '*.zip'
-        zip_files = glob(os.path.join(options['dir'], ext))
+        ext = '.zip'
+
+        zip_files = [os.path.join(dirpath, f)
+                     for dirpath, dirnames, files in os.walk(options['dir'])
+                     for f in files if f.endswith('.zip')]
+
         logger.info(options['dir'])
         for zip_file in zip_files:
-            name_noext = os.path.basename(zip_file[:-(len(ext) - 1)])
+            name_noext = os.path.basename(zip_file[:-(len(ext))])
             logger.info("Zip file {}".format(name_noext))
             _, created = AddedResult.objects.get_or_create(
                 identifier=name_noext)
