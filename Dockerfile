@@ -7,7 +7,6 @@ ADD . /app
 ENV DJANGO_STATIC_ROOT=/html/api/static
 
 RUN ./scripts/bootstrap
-ADD data /lhcbprdata
 
 VOLUME ["/lhcbprdata", "/html"]
 
