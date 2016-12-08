@@ -1,31 +1,23 @@
-import sys
-import q
-from lhcbpr_api.models import (Application, ApplicationVersion,
-                               Option, Attribute, SetupProject,
-                               JobDescription, AttributeGroup,
-                               AttributeThreshold, Handler, JobHandler,
-                               HandlerResult, AddedResult, Job,
-                               JobResult, Platform, Host, Executable)
-
-from rest_framework import viewsets
-from rest_framework import generics
-from rest_framework import mixins
-from rest_framework import filters
-
-from rest_framework.response import Response
-from serializers import *
-from rest_framework_extensions.mixins import NestedViewSetMixin
-
-from django.shortcuts import get_object_or_404
-from django.db.models import Count
-from rest_framework.decorators import detail_route, list_route
-
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
-
-from operator import itemgetter
-from lhcbpr_api.services import *
 
 import logging
+from operator import itemgetter
+
+from django.db.models import Count
+from django.shortcuts import get_object_or_404
+
+from lhcbpr_api.models import (Application, ApplicationVersion, Attribute,
+                               AttributeGroup, AttributeThreshold, Executable,
+                               Handler, HandlerResult, Host, Job,
+                               JobDescription, JobHandler, JobResult, Option,
+                               Platform, SetupProject)
+from lhcbpr_api.services import JobResultsService
+from rest_framework import filters, viewsets
+from rest_framework.decorators import list_route
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.response import Response
+from rest_framework_extensions.mixins import NestedViewSetMixin
+from serializers import *
+
 logger = logging.getLogger(__name__)
 
 
@@ -618,19 +610,13 @@ class CompareJobsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
 
 class TrendsViewSet(viewsets.ViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
+
     def list(self, request):
-        logger.info('Trends started')
         context = self.get_serializer_context(request)
-        logger.info('Context is read')
-        logger.info(context)
-        logger.info('Retrieving results from service')
         service = JobResultsService()
         results = service.get_results_per_attr_per_version(context)
-        q(results)
-        logger.info('results fetched !')
         total_count = service.get_attrs_count(context)
-        logger.info('Counted !')
-        logger.info('Looping over {0} results'.format(len(results)))
+
         for result_index in range(len(results)):
             for version_index in range(0, len(results[result_index]['values'])):
                 current_version = results[result_index][
@@ -650,8 +636,6 @@ class TrendsViewSet(viewsets.ViewSet):
                 }
             results[result_index]['values'] = sorted(
                 results[result_index]['values'], key=itemgetter('version'))
-        logger.info('Sending results')
-        logger.info(len(results))
         return Response({
             'count': total_count,
             'results': results
@@ -689,6 +673,7 @@ class TrendsViewSet(viewsets.ViewSet):
 
 class HistogramsViewSet(viewsets.ViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
+
     def list(self, request):
         context = self.get_serializer_context(request)
         service = JobResultsService()
