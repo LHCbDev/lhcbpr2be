@@ -1,6 +1,7 @@
 import logging
 
-from lhcbpr_api.models import (JobResult, Attribute)
+import q
+from lhcbpr_api.models import Attribute, JobResult
 
 logger = logging.getLogger(__name__)
 
@@ -84,8 +85,7 @@ class JobResultsService:
                 })
                 current_version_index = current_version_index + 1
             # Add the result to the current version
-
-            if item['resultfloat__data']:
+            if item['resultfloat__data'] is not None:
                 results[current_result_index]['values'][current_version_index][
                     'results'].append(item['resultfloat__data'])
             else:
