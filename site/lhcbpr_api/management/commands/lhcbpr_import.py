@@ -141,7 +141,9 @@ class Command(BaseCommand):
                 continue
 
             if attr.dtype == 'File':
-                self.process_file(job.id, attr.name, unzipper.read(attr.name))
+                self.process_file(job.id,
+                attr_source['filename'], 
+                unzipper.read(attr_source['filename']))
 
             result = attr.get_result_type().objects.create(
                 job=job,
@@ -155,9 +157,9 @@ class Command(BaseCommand):
             )
             # result.delete()
 
-    def process_file(self, job_id, name, file):
+    def process_file(self, job_id, file_name, file):
         path_dir = os.path.join(settings.JOBS_UPLOAD_DIR, str(job_id))
-        path_file = os.path.join(path_dir, name)
+        path_file = os.path.join(path_dir, file_name)
 
         try:
             if not os.path.exists(path_dir):
