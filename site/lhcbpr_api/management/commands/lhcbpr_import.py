@@ -25,7 +25,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('dir', help="Directory with zipped results")
 
-    def process_results(self, unzipper):
+    def process_results(self, unzipper, source):
         data = json.loads(unzipper.read('json_results'))
         print(json.dumps(data, indent=2, sort_keys=True))
 
@@ -94,10 +94,10 @@ class Command(BaseCommand):
 
         time_start = parser.parse(data['time_start'])
         time_end = parser.parse(data['time_end'])
-        #tz = pytz.timezone("CET")
-        #print("SASHA " + time_start)
+ 
         job = Job.objects.create(
             job_description=jd,
+            source=source,
             host=host,
             platform=platform,
             time_start=time_start,
@@ -107,7 +107,11 @@ class Command(BaseCommand):
         )
 
         logger.info("Created new job (id={})".format(job.id))
-        self.process_attributes(job, data['JobAttributes'], unzipper)
+        try:
+            self.process_attributes(job, data['JobAttributes'], unzipper)
+        except Exception:
+            source.delete()
+            job.delete()
 
         # job.delete()
 
@@ -182,7 +186,7 @@ class Command(BaseCommand):
         for zip_file in zip_files:
             name_noext = os.path.basename(zip_file[:-(len(ext))])
             logger.info("Zip file {}".format(name_noext))
-            _, created = AddedResult.objects.get_or_create(
+            source, created = AddedResult.objects.get_or_create(
                 identifier=name_noext)
             if not created:
                 logger.info(
@@ -193,4 +197,4 @@ class Command(BaseCommand):
             logger.info("Process zip file '{}'".format(name_noext))
 
             unzipper = zipfile.ZipFile(zip_file)
-            self.process_results(unzipper)
+            self.process_results(unzipper, source)

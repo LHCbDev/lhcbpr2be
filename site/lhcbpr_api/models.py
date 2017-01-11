@@ -173,12 +173,20 @@ class RequestedPlatform(models.Model):
         )
 
 
+class AddedResult(models.Model):
+    identifier = models.CharField(max_length=64)
+
+    def __unicode__(self):
+        return self.identifier
+
 class Job(models.Model):
     host = models.ForeignKey(
         Host, null=True, related_name='job')
     job_description = models.ForeignKey('JobDescription', related_name='jobs',
                                         db_column='job_description_id')
     platform = models.ForeignKey(Platform, null=True, related_name='jobs')
+    source = models.ForeignKey(AddedResult, null=True, related_name='job' )
+
     time_start = models.DateTimeField()
     time_end = models.DateTimeField()
     status = models.CharField(max_length=50)
@@ -348,8 +356,4 @@ class HandlerResult(models.Model):
         )
 
 
-class AddedResult(models.Model):
-    identifier = models.CharField(max_length=64)
 
-    def __unicode__(self):
-        return self.identifier
