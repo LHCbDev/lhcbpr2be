@@ -280,7 +280,7 @@ class JobResult(models.Model):
 
     def __unicode__(self):
         return '{0} (job_id) --- {1}'.format(
-            self.job.id, self.job_attribute
+            self.job.id, self.attr
         )
 
 
