@@ -567,7 +567,7 @@ class CompareJobsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     def list(self, request):
         """
         Compare attributes' values for selected jobs. 
-        Attributes can be filtered by id or by name.
+        Attributes can be filtered by id or by name or by type.
         ---
         parameters:
             - name: ids
@@ -579,31 +579,44 @@ class CompareJobsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
             - name: contains
               description: Search attribute by name that contains this substring 
               paramType: query
+            - name: type
+              description: Comma-separated list of type' names (strings)
+            - name: groups
+              description: Comma-separated list of groups' ids (integers) 
         """
         return super(CompareJobsViewSet, self).list(request)
 
     def get_queryset(self):
         context = self.get_serializer_context()
         results = Attribute.objects
-        if context["attrs"]:
+        if 'attrs' in context and  context["attrs"]:
             results = results.filter(id__in=context["attrs"])
-        if context["contains"]:
+        if 'contains' in context and context["contains"]:
             results = results.filter(name__icontains=context["contains"])
+        if 'type' in context and context["type"]:
+            results = results.filter(dtype__in=context["type"])
+        if 'groups' in context and context['groups']:
+            results = results.filter(groups__in=context["groups"])
         results = results.filter(jobresults__job__id__in=context["ids"])
         return results.order_by('name').distinct()
 
-    def get_serializer_context(self):
-        result = {"ids": [], "attrs": [],
-                  "request": self.request, "contains": None}
+    def get_serializer_context(self):        
+        result = {
+          "ids": [], "attrs": [], "type": [], "groups": [], "request": self.request, "contains": None}
         if 'ids' in self.request.query_params:
             result["ids"] = [
                 int(id) for id in self.request.query_params['ids'].split(',')]
         if 'attrs' in self.request.query_params:
             result["attrs"] = [
                 int(id) for id in self.request.query_params['attrs'].split(',')]
-
         if 'contains' in self.request.query_params:
             result['contains'] = self.request.query_params['contains']
+        if 'type' in self.request.query_params:
+            result['type'] = [
+                id for id in self.request.query_params['type'].split(',')]
+        if 'groups' in self.request.query_params:
+            result['groups'] = [
+                int(id) for id in self.request.query_params['groups'].split(',')]
 
         return result
 

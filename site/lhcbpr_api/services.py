@@ -1,6 +1,5 @@
 import logging
 
-import q
 from lhcbpr_api.models import Attribute, JobResult
 
 logger = logging.getLogger(__name__)
