@@ -617,6 +617,8 @@ class CompareJobsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
         if 'groups' in self.request.query_params:
             result['groups'] = [
                 int(id) for id in self.request.query_params['groups'].split(',')]
+        if 'lightJob' in self.request.query_params:
+          self.serializer_class = AttributesWithJobIdResultsSerializer;
 
         return result
 
