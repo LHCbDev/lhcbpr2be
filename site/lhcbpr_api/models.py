@@ -110,7 +110,7 @@ class ApplicationVersion(models.Model):
 
 class Executable(models.Model):
     name = models.CharField(max_length=200)
-    content = models.CharField(max_length=200)
+    content = models.CharField(max_length=2000)
 
     def __unicode__(self):
         return '{%s: "%s"}' % (self.name, self.content)
