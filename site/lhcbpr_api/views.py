@@ -17,6 +17,7 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework_extensions.mixins import NestedViewSetMixin
 from serializers import *
+from math import sqrt
 
 logger = logging.getLogger(__name__)
 
@@ -642,8 +643,8 @@ class TrendsViewSet(viewsets.ViewSet):
                 average = sum(numbers) / count
                 deviation = 0
                 for n in numbers:
-                    deviation = deviation + abs(average - n)
-                deviation = deviation / count
+                    deviation += (average - n)**2
+                deviation = sqrt(deviation/count)
                 results[result_index]['values'][version_index] = {
                     'version': current_version,
                     'average': average,
