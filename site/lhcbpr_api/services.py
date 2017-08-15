@@ -32,6 +32,9 @@ class JobResultsService:
         if 'platforms' in context and context['platforms']:
             queryset = queryset.filter(
                 job__platform__id__in=context['platforms'])
+        if 'hosts' in context and context['hosts']:
+            queryset = queryset.filter(
+                job__host__id__in=context['hosts'])
         if 'versions' in context and context['versions']:
             queryset = queryset.filter(
                 job__job_description__application_version__id__in=context['versions'])
