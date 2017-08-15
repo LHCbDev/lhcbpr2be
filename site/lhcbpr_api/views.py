@@ -233,6 +233,49 @@ class ActiveApplicationViewSet(viewsets.ViewSet):
         return Response(result)
 
     @list_route()
+    def hosts(self, request, pk):
+        """
+        List the number of available job results grouped by host.
+        ---
+        type:
+          count:
+            description: Number of jobs results
+            required: true
+            type: int
+          id:
+            description: Host id
+            required: true
+            type: int
+          name:
+            description: host name
+            required: true
+            type: string
+        """
+        result = []
+        id_field = 'host__id'
+        name_field = 'host__hostname'
+
+        queryset = (
+            Job.objects
+            .select_related()
+            .values(id_field, name_field)
+            .filter(
+                job_description__application_version__application__id=pk)
+            .annotate(njobs=Count(id_field))
+            .order_by(name_field)
+        )
+
+        for host in queryset:
+            result.append(
+                {"id": host[id_field],
+                 "name": host[name_field],
+                 "count": host["njobs"]
+                 }
+            )
+
+        return Response(result)
+
+    @list_route()
     def versions(self, request, pk):
         """
         List the number of available job results grouped by applications' versions.
@@ -437,7 +480,7 @@ class SearchJobsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     def list(self, request):
         """
         Search job results.
-        We can search by: application, options, platforms, ids 
+        We can search by: application, options, platforms, hosts, ids 
         ---
         parameters:
             - name: application
@@ -451,6 +494,9 @@ class SearchJobsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
               paramType: query
             - name: platforms
               description: Comma-separated list of platform'  ids 
+              paramType: query
+            - name: hosts
+              description: Comma-separated list of host'  ids 
               paramType: query
             - name: ids
               description: Comma-separated list of job result's ids 
@@ -492,6 +538,11 @@ class SearchJobsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
         if platforms:
             ids = platforms.split(',')
             queryset = queryset.filter(platform__id__in=ids)
+
+        hosts = self.request.query_params.get("hosts", None)
+        if hosts:
+            ids = hosts.split(',')
+            queryset = queryset.filter(host__id__in=ids)
 
         job_ids = self.request.query_params.get("ids", None)
         if job_ids:
@@ -678,6 +729,9 @@ class TrendsViewSet(viewsets.ViewSet):
         if 'platforms' in request.query_params and request.query_params['platforms'].strip() != '':
             result["platforms"] = [
                 int(id) for id in request.query_params['platforms'].split(',')]
+        if 'hosts' in request.query_params and request.query_params['hosts'].strip() != '':
+            result["hosts"] = [
+                int(id) for id in request.query_params['hosts'].split(',')]
         if 'attr_filter' in request.query_params and request.query_params['attr_filter'].strip() != '':
             result['attr_filter'] = request.query_params['attr_filter']
         if 'page' in request.query_params and request.query_params['page'].strip() != '':
