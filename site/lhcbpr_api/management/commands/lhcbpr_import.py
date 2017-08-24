@@ -13,17 +13,23 @@ from glob import glob
 import zipfile
 import json
 import os
-
+import time
 
 import logging
 logger = logging.getLogger(__name__)
-
 
 class Command(BaseCommand):
     help = "Import job JSON result file (json_results)"
 
     def add_arguments(self, parser):
         parser.add_argument('dir', help="Directory with zipped results")
+        parser.add_argument(
+            '--period',
+            action='store',
+            dest='period',
+            type=int,
+            help='Period in days on which import zip files',
+        )
 
     def process_results(self, unzipper, source):
         data = json.loads(unzipper.read('json_results'))
@@ -94,7 +100,7 @@ class Command(BaseCommand):
 
         time_start = parser.parse(data['time_start'])
         time_end = parser.parse(data['time_end'])
- 
+
         job = Job.objects.create(
             job_description=jd,
             source=source,
@@ -146,8 +152,8 @@ class Command(BaseCommand):
 
             if attr.dtype == 'File':
                 self.process_file(job.id,
-                attr_source['filename'], 
-                unzipper.read(attr_source['filename']))
+                                  attr_source['filename'],
+                                  unzipper.read(attr_source['filename']))
 
             result = attr.get_result_type().objects.create(
                 job=job,
@@ -177,10 +183,18 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         ext = '.zip'
-
-        zip_files = [os.path.join(dirpath, f)
-                     for dirpath, dirnames, files in os.walk(options['dir'])
-                     for f in files if f.endswith('.zip')]
+        if options['period'] is None:
+            logger.info("No period given, importing all zip files")
+            zip_files = [os.path.join(dirpath, f)
+                         for dirpath, dirnames, files in os.walk(options['dir'])
+                         for f in files if f.endswith('.zip')]
+        else:
+            logger.info("Importing zip files from last {} days".format(options['period']))
+            now = time.time()
+            interval = now - 60*60*24*int(options['period'])
+            zip_files = [os.path.join(dirpath, f)
+                         for dirpath, dirnames, files in os.walk(options['dir'])
+                         for f in files if f.endswith('.zip') and os.path.getctime(os.path.join(dirpath, f)) > interval]
 
         logger.info(options['dir'])
         for zip_file in zip_files:
